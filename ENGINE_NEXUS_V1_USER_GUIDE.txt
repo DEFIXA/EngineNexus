@@ -1,0 +1,791 @@
+DEFIXAS ENGINE NEXUS
+USER GUIDE & REFERENCE MANUAL
+Version 1.0.0 Public Test Beta
+Windows x64
+
+Copyright © 2026 DEFIXAS.
+All rights reserved.
+
+
+============================================================
+1. INTRODUCTION
+============================================================
+
+DEFIXAS ENGINE NEXUS is a Windows AI Integration Platform designed to bring supported AI providers, development tools, workspaces, integrations, system information, and game-development systems into one desktop application.
+
+ENGINE NEXUS is designed to reduce the need to manage separate command-line windows, dependency checks, setup steps, and disconnected development tools manually.
+
+The current public test release focuses on:
+
+- Codex integration
+- Nwiro integration support
+- Unreal Engine integration support
+- Guided first-run setup
+- Automatic dependency readiness checks
+- Automatic dependency installation where supported
+- AI Work Room
+- Workspace support
+- Persistent application configuration
+- Session restore
+- System statistics and telemetry
+- Integration and connection status
+- Windows installation and uninstall support
+
+
+============================================================
+2. WHO ENGINE NEXUS IS FOR
+============================================================
+
+ENGINE NEXUS is intended for developers and creators who work with AI-assisted development tools, game engines, automation systems, and connected development workflows.
+
+Typical users may include:
+
+- Unreal Engine developers
+- Game developers
+- AI-assisted programmers
+- Technical artists
+- Solo developers
+- Small development teams
+- Developers using Codex
+- Developers using Nwiro
+- Users who want one interface for multiple development systems
+
+
+============================================================
+3. SYSTEM REQUIREMENTS
+============================================================
+
+Minimum supported platform:
+
+- Windows 10 or Windows 11
+- 64-bit operating system
+
+Additional requirements:
+
+- Internet access may be required for dependency downloads
+- Internet access may be required for AI providers
+- Individual integrations may require their own accounts
+- Individual integrations may require third-party software
+- Individual integrations may require separate licences or authentication
+
+ENGINE NEXUS will attempt to detect supported dependencies and integrations during setup.
+
+
+============================================================
+4. INSTALLATION
+============================================================
+
+Installer:
+
+EngineNexus_Setup_1.0.0_Windows_x64.exe
+
+Installation steps:
+
+1. Download the installer from the official ENGINE NEXUS GitHub Release.
+2. Run EngineNexus_Setup_1.0.0_Windows_x64.exe.
+3. Review and accept the licence agreement.
+4. Continue through the installer.
+5. Complete installation.
+6. Launch DEFIXAS ENGINE NEXUS from the desktop shortcut or Start Menu.
+
+SECURITY NOTE
+
+Version 1.0.0 is currently unsigned.
+
+Windows SmartScreen may display a warning when the installer or application is launched.
+
+Official DEFIXAS code signing is planned for a future release.
+
+
+============================================================
+5. VERIFYING YOUR DOWNLOAD
+============================================================
+
+Before installing, users may verify the installer using SHA-256.
+
+Expected installer:
+
+EngineNexus_Setup_1.0.0_Windows_x64.exe
+
+SHA-256:
+
+E5FCC6C77F488DD27743552F4A70A8AABBF80EAF648BEA22DB6CE61240928CC1
+
+A checksum file is also provided:
+
+SHA256SUMS.txt
+
+Example PowerShell verification command:
+
+Get-FileHash ".\EngineNexus_Setup_1.0.0_Windows_x64.exe" -Algorithm SHA256
+
+The returned hash should match the official SHA-256 value above.
+
+
+============================================================
+6. FIRST LAUNCH
+============================================================
+
+On first launch, ENGINE NEXUS opens into its setup experience.
+
+The setup process is used to:
+
+- Detect supported integrations
+- Detect required dependencies
+- Determine which selected systems are ready
+- Install supported missing dependencies
+- Configure selected integrations
+- Confirm that at least one AI provider is ready before setup is completed
+
+ENGINE NEXUS separates several important states.
+
+An integration may be:
+
+- Selected
+- Installed / Detected
+- Configured / Authenticated
+- Verified Ready
+- Enabled / Active
+
+These states are not the same thing.
+
+For example, an integration may be installed but not authenticated, or authenticated but not currently enabled.
+
+
+============================================================
+7. DEPENDENCY SETUP
+============================================================
+
+ENGINE NEXUS includes dependency detection and setup support.
+
+During setup, the application checks whether required software is available.
+
+For Codex, the current dependency chain may include:
+
+Node.js / npm
+↓
+Codex
+↓
+Codex authentication
+↓
+READY
+
+If Node.js or npm is missing, ENGINE NEXUS can bootstrap Node.js first.
+
+After Node.js is installed, ENGINE NEXUS refreshes dependency detection and attempts to detect npm.
+
+Once npm is available, ENGINE NEXUS can install Codex.
+
+If an installation fails, ENGINE NEXUS is designed to display an installation failure message explaining what failed and, where available, why.
+
+IMPORTANT
+
+During normal ENGINE NEXUS setup, users should avoid manually installing missing dependencies unless troubleshooting instructions specifically require it.
+
+The purpose of the setup flow is to test and use ENGINE NEXUS dependency management itself.
+
+
+============================================================
+8. DOWNLOAD ALL DEPENDENCIES
+============================================================
+
+The dependency setup page may provide a Download All Dependencies action.
+
+This action attempts to install supported missing dependencies required by the selected integrations.
+
+Typical behaviour:
+
+1. ENGINE NEXUS scans the selected integrations.
+2. Missing dependencies are identified.
+3. Download All Dependencies is selected.
+4. ENGINE NEXUS installs supported dependency prerequisites.
+5. ENGINE NEXUS refreshes detection.
+6. Remaining supported dependencies are installed.
+7. Readiness is checked again.
+
+If a dependency cannot be installed automatically, ENGINE NEXUS should report the failure rather than silently pretending everything worked. Humanity has suffered enough software that does that already.
+
+
+============================================================
+9. CODEX INTEGRATION
+============================================================
+
+ENGINE NEXUS currently includes Codex integration.
+
+Codex is used as an AI development provider inside ENGINE NEXUS.
+
+Typical Codex setup:
+
+1. Select Codex during setup.
+2. Allow ENGINE NEXUS to detect Codex.
+3. If required, install missing Node.js / npm.
+4. Allow ENGINE NEXUS to install Codex.
+5. Complete Codex authentication.
+6. Confirm Codex readiness.
+7. Open the AI Work Room.
+8. Send a test message.
+
+A successful test confirms that Codex can respond inside ENGINE NEXUS.
+
+ENGINE NEXUS is designed to replace the need to use the normal Codex CLI for everyday work, while the CLI may still be useful for fallback or debugging.
+
+
+============================================================
+10. NWIRO INTEGRATION
+============================================================
+
+ENGINE NEXUS includes support for Nwiro integration.
+
+Nwiro is intended to provide connected development functionality, including workflows involving supported external development systems such as Unreal Engine.
+
+Availability and readiness depend on the version of Nwiro installed and the configuration present on the machine.
+
+ENGINE NEXUS treats Nwiro as a separate integration with its own detection, configuration, readiness, and active state.
+
+
+============================================================
+11. UNREAL ENGINE INTEGRATION
+============================================================
+
+ENGINE NEXUS includes Unreal Engine integration support.
+
+The Unreal integration is intended for workflows where ENGINE NEXUS is used alongside Unreal Engine development.
+
+ENGINE NEXUS may detect supported Unreal installations or projects depending on the integration configuration.
+
+The integration layer is designed so Unreal Engine is not hard-coded as the only supported game engine. The architecture is modular so additional engines may be added in future releases.
+
+
+============================================================
+12. HOME
+============================================================
+
+After initial setup has been completed, the HOME area acts as the main application dashboard.
+
+The HOME area is intended to provide a simpler overview rather than duplicating every specialist page.
+
+The HOME area includes two main views:
+
+BASE
+
+The Base view is the main launched dashboard and provides general application information and status.
+
+STATS
+
+The Stats view provides task-manager-style system information, including supported local statistics such as:
+
+- CPU
+- Memory
+- Disk
+- Temperature where available
+
+Detailed specialist information remains on the relevant dedicated pages.
+
+
+============================================================
+13. AI / WORK ROOM
+============================================================
+
+The AI area includes the Work Room.
+
+The Work Room is the primary place for interacting with supported AI providers.
+
+It is designed as a hybrid AI chat and development interface rather than a simple chat box.
+
+Supported context visibility modes include:
+
+CHAT
+
+Focuses on conversational AI interaction.
+
+TASK
+
+Focuses on the task being performed.
+
+CODE
+
+Focuses on code output and terminal-style development work.
+
+ALL CONTEXT
+
+Shows the broadest supported context for the current AI interaction.
+
+The selected mode controls how much of the working context is emphasized or displayed.
+
+The Work Room is intended to become the main daily AI development environment inside ENGINE NEXUS.
+
+
+============================================================
+14. CODE-FOCUSED MODE
+============================================================
+
+When using code-focused work, ENGINE NEXUS is designed to provide a terminal-oriented development view.
+
+The code-focused experience is intended to resemble the practical clarity of a development terminal rather than a decorative chat interface.
+
+Where supported, unrelated visual activity may be reduced while the code or terminal-focused view is active.
+
+
+============================================================
+15. WORKSPACES
+============================================================
+
+ENGINE NEXUS supports workspaces.
+
+A workspace is intended to represent a development working context.
+
+Workspaces may be used to organize:
+
+- AI work
+- Development context
+- Project-related activity
+- Integration-related activity
+- Connected tools
+
+Workspace behaviour may expand in later releases as the platform develops.
+
+
+============================================================
+16. SYSTEMS & INTEGRATIONS
+============================================================
+
+ENGINE NEXUS uses a modular integration architecture.
+
+Each module may define its own:
+
+- Manifest
+- Dependencies
+- Readiness checks
+- Actions
+- Detection behaviour
+
+This allows ENGINE NEXUS to support multiple development systems without building the application around only one provider or engine.
+
+Current or planned module families include:
+
+- AI providers
+- Game engines
+- Development tools
+- Integration services
+- Automation systems
+
+Not every module shown in the application is necessarily available in version 1.0.0.
+
+
+============================================================
+17. CONNECTIONS
+============================================================
+
+The Connections area provides information about integration and connection state.
+
+It is intended to help users understand whether supported systems are connected, available, or experiencing problems.
+
+The page may include connection-related statistics and fluctuating connection metrics such as latency-style information where supported.
+
+Use this area when checking whether integrations are communicating as expected.
+
+
+============================================================
+18. TELEMETRY
+============================================================
+
+The Telemetry area displays supported application and system telemetry.
+
+Telemetry views may include graphs or historical activity information.
+
+The purpose of the telemetry page is to make system and integration behaviour easier to inspect visually.
+
+Telemetry availability may vary depending on the selected integration and system configuration.
+
+
+============================================================
+19. APPLICATION STATISTICS
+============================================================
+
+ENGINE NEXUS includes local system statistics intended to provide useful development-machine information without requiring the user to leave the application.
+
+Possible statistics include:
+
+- CPU usage
+- Memory usage
+- Disk information
+- Temperature information where available
+
+Not every system exposes every metric.
+
+
+============================================================
+20. SETTINGS
+============================================================
+
+ENGINE NEXUS includes application settings for supported configuration and accessibility options.
+
+Settings are designed to persist between sessions.
+
+Exact available options may change as the public test progresses.
+
+Users should use the Settings page for application-level behaviour rather than manually editing ENGINE NEXUS files.
+
+
+============================================================
+21. SESSION RESTORE
+============================================================
+
+ENGINE NEXUS stores supported user configuration and session state.
+
+After setup has been completed, the application is designed to remember relevant choices and restore a usable state on future launches.
+
+On startup, ENGINE NEXUS may continue using the last known session/configuration or allow the user to reconfigure supported systems.
+
+This helps avoid repeating the complete setup process every time the application is opened.
+
+
+============================================================
+22. READINESS STATES
+============================================================
+
+ENGINE NEXUS distinguishes between several readiness concepts.
+
+SELECTED
+
+The user has chosen the integration.
+
+INSTALLED / DETECTED
+
+ENGINE NEXUS can detect the required software.
+
+CONFIGURED / AUTHENTICATED
+
+The integration has the required configuration or login state.
+
+VERIFIED READY
+
+ENGINE NEXUS has confirmed that the integration meets its readiness checks.
+
+ENABLED / ACTIVE
+
+The integration is currently enabled for use.
+
+A green or ready state should only be treated as meaningful when the required readiness conditions have actually been verified.
+
+
+============================================================
+23. TROUBLESHOOTING
+============================================================
+
+GENERAL RULE
+
+If setup fails, stop at the first failure and record what ENGINE NEXUS reports.
+
+Do not install random software or change unrelated system settings before understanding the failure.
+
+This is especially important during the public test beta because failure information helps identify genuine ENGINE NEXUS problems.
+
+
+------------------------------------------------------------
+CODEx DOES NOT INSTALL
+------------------------------------------------------------
+
+Check whether ENGINE NEXUS reports:
+
+- Node.js missing
+- npm missing
+- Codex installation failure
+- Authentication required
+
+If Node.js / npm is missing, use ENGINE NEXUS dependency installation first.
+
+After installation, allow ENGINE NEXUS to rescan.
+
+
+------------------------------------------------------------
+CODEX IS INSTALLED BUT NOT READY
+------------------------------------------------------------
+
+Possible causes:
+
+- Authentication is incomplete
+- Codex cannot be detected
+- The environment has not refreshed
+- A required dependency is unavailable
+
+Complete authentication and then refresh or restart ENGINE NEXUS if required.
+
+
+------------------------------------------------------------
+WINDOWS SMARTSCREEN WARNING
+------------------------------------------------------------
+
+Version 1.0.0 is unsigned.
+
+A SmartScreen warning does not automatically mean the installer is malicious.
+
+Users should verify that:
+
+- The installer came from the official DEFIXAS GitHub release
+- The filename matches
+- The SHA-256 hash matches the official release checksum
+
+
+------------------------------------------------------------
+AN INTEGRATION SHOWS AS UNAVAILABLE
+------------------------------------------------------------
+
+Some integrations shown by ENGINE NEXUS may be planned, disabled, unsupported on the current system, or unavailable in version 1.0.0.
+
+Only modules marked available during Setup are supported in the current release.
+
+
+------------------------------------------------------------
+SYSTEM STATISTIC IS MISSING
+------------------------------------------------------------
+
+Some statistics depend on hardware, drivers, or Windows reporting capabilities.
+
+If a temperature or other metric is unavailable, this may reflect the machine rather than an application fault.
+
+
+============================================================
+24. PUBLIC TEST BETA GUIDELINES
+============================================================
+
+Version 1.0.0 is being distributed as a public test beta.
+
+Testing is especially useful for:
+
+- Clean-PC installation
+- First-run setup
+- Dependency detection
+- Automatic dependency installation
+- Codex installation
+- Codex authentication
+- Work Room communication
+- Session persistence
+- Restart behaviour
+- Integration readiness
+- Windows compatibility
+- Error messages
+- Installer and uninstaller behaviour
+
+When reporting a problem, include:
+
+- What you were trying to do
+- The exact step that failed
+- The message displayed by ENGINE NEXUS
+- A screenshot where possible
+- Whether the machine already had Node.js, npm, Codex, Nwiro, or Unreal installed
+- Whether the problem still occurs after restarting ENGINE NEXUS
+
+Do not hide the first error by repeatedly installing unrelated dependencies.
+
+The first failure is usually the useful one.
+
+
+============================================================
+25. CLEAN-PC TEST PROCEDURE
+============================================================
+
+For testers evaluating automatic dependency setup:
+
+1. Install ENGINE NEXUS.
+2. Launch ENGINE NEXUS.
+3. Select Codex.
+4. Allow ENGINE NEXUS to detect missing dependencies.
+5. Do not manually install Node.js, npm, or Codex.
+6. Use Download All Dependencies.
+7. Allow ENGINE NEXUS to install supported prerequisites.
+8. Complete Codex authentication.
+9. Open the Work Room.
+10. Send a simple test message such as:
+
+hi
+
+11. Confirm Codex responds.
+12. Close ENGINE NEXUS.
+13. Launch ENGINE NEXUS again.
+14. Confirm the configuration/session remains usable.
+
+If any step fails:
+
+STOP.
+
+Record the first failure before manually changing the machine.
+
+
+============================================================
+26. PRIVACY
+============================================================
+
+The installed application includes a Privacy Notice.
+
+Users should review the Privacy Notice included with the installed application for information about ENGINE NEXUS data handling.
+
+Third-party AI providers and services may have their own privacy policies and terms.
+
+ENGINE NEXUS does not replace the terms, policies, or account requirements of third-party providers.
+
+
+============================================================
+27. LICENSING
+============================================================
+
+DEFIXAS ENGINE NEXUS is proprietary software.
+
+The public release does not distribute the application source code.
+
+The installed application includes:
+
+- End User Licence Agreement
+- Privacy Notice
+- Third-party software notices
+- Applicable open-source licence information
+
+Third-party components remain subject to their respective licences.
+
+
+============================================================
+28. CURRENT LIMITATIONS
+============================================================
+
+Known limitations for version 1.0.0 include:
+
+- Only modules marked available during Setup are supported
+- Some planned providers are not yet available
+- Some planned integrations are not yet available
+- The Windows installer is unsigned
+- Third-party integrations may require separate accounts
+- Third-party integrations may require separate licences
+- Third-party integrations may require additional installed software
+
+The public test beta is intended to expose real-world compatibility problems before a broader stable release.
+
+
+============================================================
+29. FUTURE DEVELOPMENT
+============================================================
+
+ENGINE NEXUS is designed around a modular platform architecture.
+
+Future development may include additional:
+
+- AI providers
+- Game engines
+- Development tools
+- Integration modules
+- Automation systems
+- Workspace features
+- Monitoring features
+- Connection features
+- Developer workflow features
+
+Future availability is not guaranteed until a feature is included in an official release.
+
+
+============================================================
+30. RELEASE FILES
+============================================================
+
+The v1.0.0 public release may include:
+
+EngineNexus_Setup_1.0.0_Windows_x64.exe
+README.md
+RELEASE_NOTES.txt
+SHA256SUMS.txt
+
+The installer should be downloaded from the GitHub Releases section rather than from a random third-party mirror.
+
+
+============================================================
+31. SUPPORT
+============================================================
+
+Official support and contact information will be published through DEFIXAS release channels.
+
+When requesting support, provide enough information to reproduce the problem.
+
+Useful details include:
+
+- Windows version
+- ENGINE NEXUS version
+- Selected integrations
+- Whether dependencies were already installed
+- Exact error text
+- Screenshots
+- Steps immediately before the problem occurred
+
+
+============================================================
+32. QUICK REFERENCE
+============================================================
+
+FIRST TIME USER
+
+Install
+↓
+Launch
+↓
+Choose integrations
+↓
+Scan dependencies
+↓
+Install missing supported dependencies
+↓
+Authenticate AI provider
+↓
+Verify readiness
+↓
+Open Work Room
+↓
+Start working
+
+
+CODEX SETUP
+
+Select Codex
+↓
+Node.js / npm detected or installed
+↓
+Codex installed
+↓
+Codex authenticated
+↓
+Verified Ready
+↓
+Work Room
+
+
+IF SOMETHING FAILS
+
+Stop at the first error
+↓
+Record the message
+↓
+Take a screenshot
+↓
+Avoid random manual fixes
+↓
+Report the failure
+
+
+============================================================
+33. FINAL NOTES
+============================================================
+
+ENGINE NEXUS v1.0.0 is the first public test release.
+
+It is intended to establish a stable base for a larger AI integration platform while testing real-world installation, dependency management, AI provider readiness, and development workflows.
+
+The application is actively evolving.
+
+Some systems visible in the interface may represent planned architecture rather than features available in the current release.
+
+Always use the official release notes to confirm what is supported by the version you are running.
+
+
+DEFIXAS ENGINE NEXUS
+AI Integration Platform
+
+Connect. Manage. Build.
+
+Copyright © 2026 DEFIXAS.
+All rights reserved.
