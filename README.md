@@ -65,6 +65,21 @@ Download the latest installer from the **GitHub Releases** section:
 
 ---
 
+## 📚 Documentation
+
+Need the full setup guide, feature breakdown, troubleshooting steps, and clean-PC testing instructions?
+
+Read the complete user guide:
+
+[ENGINE NEXUS v1.0.0 User Guide](./ENGINE_NEXUS_V1_USER_GUIDE.txt)
+
+Also available:
+
+- [Release Notes](./RELEASE_NOTES.txt)
+- [SHA-256 Checksums](./SHA256SUMS.txt)
+
+--- 
+
 ## 🛠 Installation
 
 1. Download `EngineNexus_Setup_1.0.0_Windows_x64.exe`
