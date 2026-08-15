@@ -1,0 +1,33 @@
+﻿DEFIXAS ENGINE NEXUS
+RELEASE NOTES
+Version 1.0.0
+
+INITIAL V1 RELEASE
+
+Highlights:
+- Modern DEFIXAS ENGINE NEXUS desktop interface
+- Guided first-run setup and session restore
+- Modular Systems, Integrations, and AI provider architecture
+- Codex integration
+- AI Work Room with Chat, Task, Code, and All Context modes
+- Workspace support
+- Local system statistics and telemetry views
+- Connections and integration status
+- Accessibility and application settings
+- Dependency readiness checks
+- Persistent configuration and session state
+- Windows installer and uninstall support
+- Proprietary application licence
+- Privacy Notice
+- Third-party/open-source licence bundle
+- Qt/PySide6 LGPL compliance materials
+
+KNOWN LIMITATIONS
+- Only modules marked available during Setup are supported in this release.
+- Some planned providers and integrations remain unavailable.
+- The Windows installer is currently unsigned.
+- Third-party providers may require their own accounts, licences, or installed software.
+
+Version: 1.0.0
+Platform: Windows x64
+Publisher: DEFIXAS
