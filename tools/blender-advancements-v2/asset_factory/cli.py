@@ -20,6 +20,7 @@ def main(argv=None):
         if name == "build":
             s.add_argument("--blender", required=False)
             s.add_argument("--allow-paid", action="store_true")
+            s.add_argument("--meshy-cli", default="meshy")
     args = p.parse_args(argv)
     if args.command == "audit":
         print(json.dumps(audit_file(args.spec_or_qc).to_dict(), indent=2))
@@ -41,9 +42,9 @@ def main(argv=None):
     if selected.backend == "meshy":
         if not args.allow_paid:
             raise SystemExit("Meshy requires --allow-paid after user approves cloud upload and cost")
-        from .meshy import submit_image_candidate
-        result = submit_image_candidate(spec)
-        manifest.update(status="cloud_candidate_submitted", meshy=result)
+        from .meshy_cli import generate_candidate
+        result = generate_candidate(spec, output, executable=args.meshy_cli)
+        manifest.update(status="cloud_candidate_downloaded_unvalidated", meshy=result)
     elif selected.backend == "infinigen":
         from .infinigen import run_individual_asset
         result = run_individual_asset(spec, output)

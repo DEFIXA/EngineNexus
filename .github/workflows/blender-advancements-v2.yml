@@ -59,6 +59,8 @@ jobs:
           test -s work/twisted_dead_tree_001/asset.glb
           test -s work/twisted_dead_tree_001/asset.fbx
           test -s work/twisted_dead_tree_001/qc.json
+          test -s work/twisted_dead_tree_001/qc_front.png
+          test -s work/twisted_dead_tree_001/qc_side.png
           test -s work/dragon_hindleg_001/asset.glb
           test -s work/dragon_hindleg_001/qc.json
       - uses: actions/upload-artifact@v4

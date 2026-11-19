@@ -57,3 +57,6 @@ Set `extra.source_glb` in a static-asset spec and use `backend: blender`. The wo
 
 ## Verified Infinigen CLI reference
 [Generating Individual Assets](https://github.com/princeton-vl/infinigen/blob/main/docs/source/GeneratingIndividualAssets.md) documents `python -m infinigen_examples.generate_individual_assets --output_folder outputs/chunkyrock -f ChunkyRock -n 1 --save_blend --render none --export obj`. This requires an installed Infinigen environment.
+
+## Any-prompt Meshy generation and task resumption
+`backend: "meshy"` supports text-to-3D when no references are provided, image-to-3D with one reference, and multi-image-to-3D with two or more consistent views. This path uses the Meshy CLI 0.8.5+ and requires `--allow-paid`, authentication, and cloud-upload consent. It stores `meshy_task.json` immediately after a successful paid submission, then resumes the same task instead of resubmitting and charging twice. A downloaded GLB remains an **unvalidated candidate**. For text-to-3D, the initial result is an untextured preview; refine/retexture is a separately approved stage.

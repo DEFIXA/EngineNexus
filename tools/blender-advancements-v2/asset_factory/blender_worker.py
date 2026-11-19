@@ -174,6 +174,7 @@ def make_collision(obj, category):
                                         depth=5.8, location=(0, 0, 2.9))
     collision = bpy.context.object
     collision.name = f"UCX_{obj.name}_00"
+    collision.hide_render = True
     return collision
 
 
@@ -184,6 +185,7 @@ def make_lods(obj, count):
         lod.data = obj.data.copy()
         bpy.context.collection.objects.link(lod)
         lod.name = f"{obj.name}_LOD{index}"
+        lod.hide_render = True
         mod = lod.modifiers.new("LOD_Decimate", "DECIMATE")
         mod.ratio = max(0.07, 0.55 ** index)
         bpy.context.view_layer.objects.active = lod
@@ -227,6 +229,38 @@ def export_mesh(obj, lods, collision, output):
         bpy.context.view_layer.objects.active = lod
         bpy.ops.export_scene.gltf(filepath=str(output / f"lod{index}.glb"),
                                   export_format="GLB", use_selection=True)
+
+
+def render_reference_views(obj, output):
+    """Fixed orthographic technical previews, not a reference-similarity score."""
+    from mathutils import Vector
+    scene = bpy.context.scene
+    scene.render.engine = "BLENDER_WORKBENCH"
+    scene.render.resolution_x = 512
+    scene.render.resolution_y = 512
+    scene.render.resolution_percentage = 100
+    scene.render.image_settings.file_format = "PNG"
+    camera_data = bpy.data.cameras.new("QC_Ortho")
+    camera = bpy.data.objects.new("QC_Ortho", camera_data)
+    bpy.context.collection.objects.link(camera)
+    scene.camera = camera
+    camera_data.type = "ORTHO"
+    dims = obj.dimensions
+    span = max(dims.x, dims.y, dims.z, 1.0)
+    camera_data.ortho_scale = span * 1.65
+    center = obj.matrix_world @ Vector((0.0, 0.0, 0.0))
+    # Use evaluated world-space bounds for a robust camera target.
+    center = sum((obj.matrix_world @ Vector(c) for c in obj.bound_box), Vector()) / 8.0
+    directions = {
+        "front": Vector((0.0, -1.0, 0.25)),
+        "side": Vector((1.0, 0.0, 0.25)),
+        "three_quarter": Vector((1.0, -1.0, 0.45)),
+    }
+    for name, direction in directions.items():
+        camera.location = center + direction.normalized() * span * 2.5
+        camera.rotation_euler = (center - camera.location).to_track_quat("-Z", "Y").to_euler()
+        scene.render.filepath = str(output / f"qc_{name}.png")
+        bpy.ops.render.render(write_still=True)
 
 
 def main():
@@ -290,6 +324,7 @@ def main():
     }
     (output / "qc.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     export_mesh(obj, lods, collision, output)
+    render_reference_views(obj, output)
     bpy.ops.wm.save_as_mainfile(filepath=str(output / "master.blend"))
 
 
