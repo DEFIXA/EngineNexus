@@ -49,6 +49,16 @@ class TestAssetFactory(unittest.TestCase):
         self.assertTrue(d.visual_review_required)
         self.assertTrue(d.engine_validation_required)
 
+    def test_open_terrain_boundary_is_not_a_failure(self):
+        qc = {"objects": [{"name": "terrain", "triangles": 100,
+                           "non_manifold_edges": 40, "boundary_edges": 40,
+                           "loose_vertices": 0, "has_uv": True}],
+              "runtime_triangles": 100}
+        self.assertTrue(decide(qc, animated=False, references=False,
+                               triangle_budget=500, allow_open_mesh=True).technical_pass)
+        self.assertFalse(decide(qc, animated=False, references=False,
+                                triangle_budget=500).technical_pass)
+
     def test_qc_rejects_bad_mesh(self):
         qc = {"objects": [{"name": "bad", "triangles": 20, "non_manifold_edges": 5,
                             "loose_vertices": 0, "has_uv": False}],

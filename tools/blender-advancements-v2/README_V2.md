@@ -69,3 +69,6 @@ When a creature, character or prop has reference images, the router prefers a Me
 
 ## Unreal import helper
 Run `asset_factory/unreal_import.py` **inside Unreal Editor's Python environment** and call `import_candidate_folder('/path/to/work/tree', '/Game/Generated')`. It prefers FBX so a UCX collision mesh can be recognized. LOD GLBs still need explicit UE assignment. No UE performance claim is made until profiled in-engine.
+
+## Additional procedural scaffolds
+The Blender worker now supports `structure` (simple modular building with door and window openings), `rock` (seeded irregular stone) and `terrain` (seeded open grid) as well as tree and dragon leg. These are deterministic editable bases, not semantic reconstructions of arbitrary descriptions. For unsupported creature parts and detailed prompts, select Meshy or an installed local 3D AI provider. Terrain open boundary edges are allowed only when every non-manifold edge is a boundary edge.

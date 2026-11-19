@@ -116,6 +116,96 @@ def make_leg(seed):
     return parts
 
 
+def box_piece(name, location, dimensions, mat, rotation_y=0.0):
+    bpy.ops.mesh.primitive_cube_add(size=1.0, location=location)
+    obj = bpy.context.object
+    obj.name = name
+    obj.dimensions = dimensions
+    obj.rotation_euler.y = rotation_y
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+    obj.data.materials.append(mat)
+    return obj
+
+
+def make_structure(spec):
+    """Simple modular house scaffold with a real door opening, not a final building."""
+    extra = spec.get("extra", {})
+    width = max(3.0, min(30.0, float(extra.get("width_m", 6.0))))
+    depth = max(3.0, min(30.0, float(extra.get("depth_m", 4.0))))
+    height = max(2.5, min(20.0, float(extra.get("height_m", 3.2))))
+    thick = 0.24
+    door_w, door_h = 1.25, 2.2
+    stone = material("M_Stone_Plaster", (0.43, 0.42, 0.39, 1))
+    timber = material("M_Timber", (0.18, 0.12, 0.08, 1))
+    slate = material("M_Slate_Roof", (0.11, 0.12, 0.14, 1))
+    parts = [box_piece("Floor", (0, 0, -0.12), (width, depth, 0.24), stone)]
+    side_w = (width - door_w) / 2
+    parts.append(box_piece("Front_Left", (-(door_w + side_w)/2, -depth/2, height/2),
+                           (side_w, thick, height), stone))
+    parts.append(box_piece("Front_Right", ((door_w + side_w)/2, -depth/2, height/2),
+                           (side_w, thick, height), stone))
+    parts.append(box_piece("Front_Lintel", (0, -depth/2, (height + door_h)/2),
+                           (door_w, thick, height - door_h), stone))
+    parts.append(box_piece("Back", (0, depth/2, height/2),
+                           (width, thick, height), stone))
+    for x, side in ((-width/2, "Left"), (width/2, "Right")):
+        # Side window void: lower wall, upper wall and left/right piers.
+        win_w, win_h, sill = 1.2, 0.95, 1.05
+        parts.append(box_piece(side+"_Sill", (x, 0, sill/2),
+                               (thick, win_w, sill), stone))
+        parts.append(box_piece(side+"_Top", (x, 0, (height+sill+win_h)/2),
+                               (thick, win_w, height-sill-win_h), stone))
+        pier_d = (depth-win_w)/2
+        for sign in (-1, 1):
+            y = sign*(win_w+ pier_d)/2
+            parts.append(box_piece(side+f"_Pier_{sign}", (x, y, height/2),
+                                   (thick, pier_d, height), stone))
+    pitch = math.radians(25)
+    rise = (width/4) * math.tan(pitch)
+    for sign in (-1, 1):
+        parts.append(box_piece("Roof_"+str(sign),
+            (sign*width/4, 0, height+rise/2),
+            (width/2+0.6, depth+0.8, 0.18), slate,
+            rotation_y=-sign*pitch))
+    for sign in (-1, 1):
+        parts.append(box_piece("Door_Frame_"+str(sign),
+            (sign*door_w/2, -depth/2-0.12, door_h/2),
+            (0.13, 0.18, door_h), timber))
+    return parts
+
+
+def make_rock(seed):
+    rng = random.Random(seed)
+    stone = material("M_Rock", (0.32, 0.33, 0.34, 1))
+    bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=4, radius=1.0)
+    obj = bpy.context.object
+    obj.name = "Rock_Source"
+    for v in obj.data.vertices:
+        p = v.co
+        wobble = (1.0 + 0.13*math.sin(4*p.x+2*p.y) +
+                  0.10*math.cos(5*p.z-p.x) + rng.uniform(-0.07, 0.07))
+        p.x *= 1.65*wobble
+        p.y *= 1.1*wobble
+        p.z *= 0.85*wobble
+    obj.data.materials.append(stone)
+    return [obj]
+
+
+def make_terrain(seed):
+    """Open grid terrain. Boundary edges are expected and audited separately."""
+    rng = random.Random(seed)
+    ground = material("M_Ground", (0.28, 0.27, 0.22, 1))
+    bpy.ops.mesh.primitive_grid_add(x_subdivisions=64, y_subdivisions=64, size=12)
+    obj = bpy.context.object
+    obj.name = "Terrain_Source"
+    for v in obj.data.vertices:
+        x, y = v.co.x, v.co.y
+        v.co.z = (0.55*math.sin(x*0.47)*math.cos(y*0.42) +
+                  0.18*math.sin(x*1.23+y*0.61) + rng.uniform(-0.045, 0.045))
+    obj.data.materials.append(ground)
+    return [obj]
+
+
 def join_meshes(parts, name):
     bpy.ops.object.select_all(action="DESELECT")
     for obj in parts:
@@ -199,9 +289,11 @@ def audit(obj):
     bm.from_mesh(obj.data)
     loose = sum(1 for v in bm.verts if not v.link_edges)
     nonmanifold = sum(1 for e in bm.edges if not e.is_manifold)
+    boundary = sum(1 for e in bm.edges if e.is_boundary)
     bm.free()
     return {"name": obj.name, "triangles": triangles(obj),
             "loose_vertices": loose, "non_manifold_edges": nonmanifold,
+            "boundary_edges": boundary,
             "has_uv": bool(obj.data.uv_layers),
             "negative_scale": any(v < 0 for v in obj.scale)}
 
@@ -300,8 +392,14 @@ def main():
             raise ValueError("Imported GLB contains no mesh")
     elif category in {"tree", "root", "foliage"}:
         parts = make_tree(spec["seed"])
-    elif category in {"creature", "animal"}:
+    elif category in {"creature", "animal"} and "leg" in spec["prompt"].lower():
         parts = make_leg(spec["seed"])
+    elif category == "structure":
+        parts = make_structure(spec)
+    elif category == "rock":
+        parts = make_rock(spec["seed"])
+    elif category == "terrain":
+        parts = make_terrain(spec["seed"])
     else:
         raise ValueError(f"No built-in geometry builder for category {category}; supply extra.source_glb or a backend")
     obj = join_meshes(parts, name)
@@ -312,7 +410,8 @@ def main():
     master.name = "SOURCE_HIGH_" + spec["asset_id"]
     master.hide_render = True
     master.hide_set(True)
-    apply_voxel_remesh(obj, voxel_size=0.055 if category == "tree" else 0.035)
+    if source_glb or category in {"tree", "root", "foliage", "creature", "animal"}:
+        apply_voxel_remesh(obj, voxel_size=0.055 if category == "tree" else 0.035)
     add_uv(obj)
     original_triangles, optimized_triangles = reduce_to_budget(obj, spec["target_triangles"])
     lods = make_lods(obj, spec["max_lod_count"] if not spec["animated"] else 0)
@@ -333,7 +432,8 @@ def main():
             "Procedural/imported candidate, not reference-validated",
             "Automatic remesh is not deformation topology",
             "No high-to-low texture bake or UE profiling performed",
-            "UCX collision is an approximate trunk primitive; verify gameplay fit",
+            "UCX collision is only supplied for tree-like assets; verify gameplay fit",
+            "Structures/rocks/terrain require collision setup in Unreal",
             "LODs are exported separately and require Unreal LOD assignment",
         ],
     }
