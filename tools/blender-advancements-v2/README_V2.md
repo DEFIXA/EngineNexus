@@ -81,3 +81,6 @@ The offline Blender worker only implements concrete scaffold categories. Unsuppo
 
 ## Headless visual previews
 On headless Linux, Blender 5 Workbench rendering may abort when `libEGL.so.1` is unavailable. V2 therefore generates three GPU-free **SVG technical previews** from mesh geometry using a depth-sorted projection. These are useful for silhouette review but are not photorealistic renders or automated similarity scores. Use Blender's normal render pipeline on a workstation for final artistic review.
+
+## Geometry-first acceptance correction
+The previous dragon-leg result was visibly fragmented despite green code tests. Creature builds now fail if the runtime mesh has disconnected islands, require three **real Blender Cycles PNG clay renders**, and cap complete LOD0 geometry at 200,000 triangles. The procedural full-dragon example includes a head, torso, four legs, two wing membranes, a tail, claws and horns. This is a *blockout candidate* that must be compared to the user's sculpt references; it is not promised to meet their high-fidelity bar without artistic refinement. Texture work is deferred.

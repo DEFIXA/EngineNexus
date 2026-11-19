@@ -62,3 +62,8 @@ Prefer the installed Meshy hosted tools in a connected ChatGPT session. For loca
 
 ## Headless QC previews
 The worker exports qc_front.svg, qc_side.svg and qc_three_quarter.svg using CPU geometry projection. They are approximate technical views, not photorealistic renders or automatic reference-matching proof. This avoids EGL/OpenGL requirements on headless runners.
+
+## Critical reference-matched mesh acceptance gate
+A code test or JSON technical pass is NEVER a visual pass. For dragons and creatures, render the **actual mesh in Blender** as clay PNGs from front, side and three-quarter cameras. Open the images and visually compare with the user-supplied references before any success claim. Require the complete creature when the prompt requests a full dragon: head, body, four feet with toes and claws, two wings with membranes, tail and spines. Reject missing anatomy, detached pieces, silhouette mismatch, incorrect proportions and melted or disconnected shapes.
+**200,000 triangles is a hard upper limit for the entire LOD0 asset**, not per part. Fewer triangles are desirable only if the full silhouette and detail survive. Ignore texture quality for this gate. The asset's QC status remains awaiting_visual_review even when technical checks pass; explicit human reference approval is necessary. No procedural blockout should be described as a hero-quality match.
+For Blender creature builds, clay_front.png, clay_side.png and clay_three_quarter.png are true Cycles CPU renders, and QC counts connected mesh islands. The reference images must be opened side-by-side with these renders by the reviewer. If images are not available on the build runner, reference matching remains unverified.

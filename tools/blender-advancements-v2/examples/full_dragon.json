@@ -1,0 +1,17 @@
+{
+  "asset_id": "full_dragon_clay_001",
+  "category": "creature",
+  "prompt": "Full quadruped dark fantasy dragon with anatomically connected torso, head, jaws, four digitigrade clawed legs, long tapered spined tail, two articulated membranous wings, dorsal spines and horns. Full body, not a disconnected leg. Clay geometry only.",
+  "references": [],
+  "animated": true,
+  "backend": "blender",
+  "platform": "pc",
+  "target_triangles": 160000,
+  "texture_size": 1024,
+  "seed": 73,
+  "max_lod_count": 0,
+  "require_human_review": true,
+  "extra": {
+    "full_creature": true
+  }
+}

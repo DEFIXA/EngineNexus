@@ -11,6 +11,8 @@ import random
 import sys
 from pathlib import Path
 from mathutils import Vector
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from dragon_geometry import make_leg as make_anatomical_leg, make_full_dragon
 
 
 def material(name, rgba):
@@ -522,8 +524,10 @@ def main():
             raise ValueError("Imported GLB contains no mesh")
     elif category in {"tree", "root", "foliage"}:
         parts = make_tree(spec["seed"])
+    elif category in {"creature", "animal"} and "dragon" in spec["prompt"].lower() and ("full" in spec["prompt"].lower() or spec.get("extra", {}).get("full_creature")):
+        parts = make_full_dragon(spec["seed"])
     elif category in {"creature", "animal"} and "leg" in spec["prompt"].lower():
-        parts = make_leg(spec["seed"])
+        parts = make_anatomical_leg(spec["seed"])
     elif category == "structure":
         parts = make_structure(spec)
     elif category == "rock":
@@ -541,7 +545,8 @@ def main():
     master.hide_render = True
     master.hide_set(True)
     if source_glb or category in {"tree", "root", "foliage", "creature", "animal"}:
-        apply_voxel_remesh(obj, voxel_size=0.055 if category == "tree" else 0.035)
+        voxel = 0.075 if spec.get("extra", {}).get("full_creature") else (0.055 if category == "tree" else 0.035)
+        apply_voxel_remesh(obj, voxel_size=voxel)
     add_uv(obj)
     original_triangles, optimized_triangles = reduce_to_budget(obj, spec["target_triangles"])
     lods = make_lods(obj, spec["max_lod_count"] if not spec["animated"] else 0)
