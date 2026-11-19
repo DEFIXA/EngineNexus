@@ -164,12 +164,24 @@ def make_structure(spec):
             parts.append(box_piece(side+f"_Pier_{sign}", (x, y, height/2),
                                    (thick, pier_d, height), stone))
     pitch = math.radians(25)
-    rise = (width/4) * math.tan(pitch)
+    rise = (width/2) * math.tan(pitch)
     for sign in (-1, 1):
         parts.append(box_piece("Roof_"+str(sign),
             (sign*width/4, 0, height+rise/2),
             (width/2+0.6, depth+0.8, 0.18), slate,
-            rotation_y=-sign*pitch))
+            rotation_y=sign*pitch))
+    # Individually modeled overlapping slate shingles: real geometry, not texture.
+    for sign in (-1, 1):
+        for row in range(8):
+            x = sign * (row + 0.5) * width / 16.0
+            z = height + rise * (1.0 - 2.0 * abs(x) / width) + 0.15
+            for col in range(10):
+                y = -depth / 2 + (col + 0.5) * depth / 10
+                parts.append(box_piece(
+                    "SlateTile_%s_%02d_%02d" % (sign, row, col),
+                    (x, y, z),
+                    (width / 16 + 0.045, depth / 10 + 0.055, 0.045),
+                    slate, rotation_y=sign * pitch))
     for sign in (-1, 1):
         parts.append(box_piece("Door_Frame_"+str(sign),
             (sign*door_w/2, -depth/2-0.12, door_h/2),
@@ -180,7 +192,7 @@ def make_structure(spec):
 def make_rock(seed):
     rng = random.Random(seed)
     stone = material("M_Rock", (0.32, 0.33, 0.34, 1))
-    bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=4, radius=1.0)
+    bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=5, radius=1.0)
     obj = bpy.context.object
     obj.name = "Rock_Source"
     for v in obj.data.vertices:
@@ -601,13 +613,25 @@ def main():
     master.name = "SOURCE_HIGH_" + spec["asset_id"]
     master.hide_render = True
     master.hide_set(True)
-    if source_glb or category in {"tree", "root", "foliage", "creature", "animal"}:
-        voxel = 0.052 if spec.get("extra", {}).get("full_creature") else (0.055 if category == "tree" else 0.035)
+    extra = spec.get("extra", {})
+    # Imported sculpt fidelity must survive: no automatic destructive remesh,
+    # UV reprojection or procedural noise on an artist/AI-authored source.
+    should_fuse = ((not source_glb and category in {"creature", "animal"})
+                   or (not source_glb and category in {"tree", "root", "foliage"}
+                       and extra.get("fuse_tree", False))
+                   or (source_glb and extra.get("repair_import_with_voxel", False)))
+    if should_fuse:
+        voxel = 0.052 if extra.get("full_creature") else (0.055 if category == "tree" else 0.035)
         apply_voxel_remesh(obj, voxel_size=voxel)
-    pruned_count, pruned_faces = (prune_micro_islands(obj) if category in {"creature", "animal"} else (0, 0))
-    sculpt_report = sculpt_surface(obj, category, spec["seed"],
-        full_creature=bool(spec.get("extra", {}).get("full_creature")))
-    add_uv(obj)
+    should_prune = (category in {"creature", "animal"} and
+                    (not source_glb or extra.get("prune_imported_micro_islands", False)))
+    pruned_count, pruned_faces = prune_micro_islands(obj) if should_prune else (0, 0)
+    sculpt_report = (sculpt_surface(obj, category, spec["seed"],
+        full_creature=bool(extra.get("full_creature")))
+        if not source_glb or extra.get("sculpt_imported_geometry", False)
+        else {"enabled": False, "reason": "preserve_imported_high_fidelity_geometry"})
+    if not source_glb or not obj.data.uv_layers:
+        add_uv(obj)
     original_triangles, optimized_triangles = reduce_to_budget(obj, spec["target_triangles"])
     lods = make_lods(obj, spec["max_lod_count"] if not spec["animated"] else 0)
     collision = make_collision(obj, category) if not spec["animated"] else None

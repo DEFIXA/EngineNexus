@@ -27,6 +27,12 @@ def main(argv=None):
         return 0
 
     spec = AssetSpec.load(args.spec_or_qc)
+    # The worker reads a copied spec under work/<asset>/spec.json.
+    # Resolve source paths BEFORE that copy, relative to the original spec.
+    source_glb = spec.extra.get("source_glb")
+    if source_glb and not Path(source_glb).is_absolute():
+        spec.extra["source_glb"] = str(
+            (Path(args.spec_or_qc).resolve().parent / source_glb).resolve())
     selected = route(spec)
     print(json.dumps({"asset": spec.asset_id, "route": selected.to_dict()}, indent=2))
     if args.command == "plan":
