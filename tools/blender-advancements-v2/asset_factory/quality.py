@@ -45,8 +45,9 @@ def decide(qc: dict, *, animated: bool, references: bool, triangle_budget: int, 
         failures.append("Runtime triangle count not measured")
     elif runtime_triangles > triangle_budget:
         failures.append(f"Triangle budget exceeded: {runtime_triangles} > {triangle_budget}")
-    if require_png and len(qc.get("clay_render_files", [])) != 3:
-        failures.append("Three actual Blender clay PNG renders required")
+    required = {"clay_front.png", "clay_side.png", "clay_three_quarter.png"}
+    if require_png and not required.issubset(set(qc.get("clay_render_files", []))):
+        failures.append("Three actual Blender clay PNG views required")
     if qc.get("errors"):
         failures.extend(str(x) for x in qc["errors"])
     return QualityDecision(
