@@ -71,13 +71,13 @@ jobs:
         working-directory: tools/blender-advancements-v2
         run: |
           test -s work/twisted_dead_tree_001/asset.glb
-          test -s work/twisted_dead_tree_001/asset.fbx
+          test -s work/twisted_dead_tree_001/collision.glb
           test -s work/twisted_dead_tree_001/qc.json
           test -s work/twisted_dead_tree_001/qc_front.png
           test -s work/twisted_dead_tree_001/qc_side.png
           test -s work/dragon_hindleg_001/asset.glb
           test -s work/dragon_hindleg_001/qc.json
-          test -s work/modular_building_001/asset.fbx
+          test -s work/modular_building_001/asset.glb
           test -s work/rock_001/asset.glb
           test -s work/terrain_001/asset.glb
       - uses: actions/upload-artifact@v4

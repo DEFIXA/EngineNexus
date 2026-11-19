@@ -299,51 +299,50 @@ def audit(obj):
 
 
 def export_mesh(obj, lods, collision, output):
-    # Main GLB contains only the visible runtime mesh.
+    """GLB always. FBX only when Blender exposes a complete compatible exporter."""
+    warnings = []
     bpy.ops.object.select_all(action="DESELECT")
     obj.select_set(True)
     bpy.context.view_layer.objects.active = obj
     bpy.ops.export_scene.gltf(filepath=str(output / "asset.glb"),
                               export_format="GLB", use_selection=True)
-    # UE FBX contains main mesh plus a UCX collision primitive when available.
+    if collision is not None:
+        bpy.ops.object.select_all(action="DESELECT")
+        collision.select_set(True)
+        bpy.context.view_layer.objects.active = collision
+        bpy.ops.export_scene.gltf(filepath=str(output / "collision.glb"),
+                                  export_format="GLB", use_selection=True)
     bpy.ops.object.select_all(action="DESELECT")
     obj.select_set(True)
     if collision is not None:
         collision.select_set(True)
     bpy.context.view_layer.objects.active = obj
-    # Blender 4.x and 5.x FBX operators expose different keyword names.
-    # Select the supported properties at runtime instead of hardcoding a version.
+
     fbx_props = {p.identifier for p in bpy.ops.export_scene.fbx.get_rna_type().properties}
     selection_key = next((key for key in
         ("use_selection", "export_selected_objects", "selected_only")
         if key in fbx_props), None)
-    if selection_key:
+    if selection_key and "use_space_transform" in fbx_props:
         options = {"filepath": str(output / "asset.fbx"), selection_key: True}
         optional = {"object_types": {"MESH"}, "apply_unit_scale": True,
                     "bake_anim": False, "add_leaf_bones": False}
         options.update({key: value for key, value in optional.items()
                         if key in fbx_props})
-        bpy.ops.export_scene.fbx(**options)
-    else:
-        # Blender 5's minimal FBX operator has no selection keyword.
-        # Export from an isolated temporary scene so hidden source/LODs do not leak.
-        temporary = bpy.data.scenes.new("BA_V2_FBX_Export")
-        temporary.collection.objects.link(obj)
-        if collision is not None:
-            temporary.collection.objects.link(collision)
         try:
-            with bpy.context.temp_override(scene=temporary,
-                                           view_layer=temporary.view_layers[0]):
-                bpy.ops.export_scene.fbx(filepath=str(output / "asset.fbx"),
-                                         axis_forward="-Z", axis_up="Y")
-        finally:
-            bpy.data.scenes.remove(temporary)
+            bpy.ops.export_scene.fbx(**options)
+        except Exception as exc:
+            warnings.append(f"FBX exporter failed: {type(exc).__name__}; use GLB")
+    else:
+        # Ubuntu's Blender 5.0.1 packaged FBX addon exposes only four operator
+        # properties and crashes with missing use_space_transform. Do not call it.
+        warnings.append("FBX exporter incomplete in this Blender build; use GLB")
     for index, lod in enumerate(lods, start=1):
         bpy.ops.object.select_all(action="DESELECT")
         lod.select_set(True)
         bpy.context.view_layer.objects.active = lod
         bpy.ops.export_scene.gltf(filepath=str(output / f"lod{index}.glb"),
                                   export_format="GLB", use_selection=True)
+    return warnings
 
 
 def render_reference_views(obj, output):
@@ -449,9 +448,9 @@ def main():
             "LODs are exported separately and require Unreal LOD assignment",
         ],
     }
-    (output / "qc.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
-    export_mesh(obj, lods, collision, output)
+    report["warnings"].extend(export_mesh(obj, lods, collision, output))
     render_reference_views(obj, output)
+    (output / "qc.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     bpy.ops.wm.save_as_mainfile(filepath=str(output / "master.blend"))
 
 
