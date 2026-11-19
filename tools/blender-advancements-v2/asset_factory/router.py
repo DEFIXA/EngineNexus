@@ -29,15 +29,15 @@ def route(spec: AssetSpec) -> Route:
     elif spec.category in {"tree", "root", "foliage", "rock", "terrain"}:
         backend = "blender"
         reason = "Procedural control and variation are appropriate for nature"
-    elif spec.category in {"creature", "animal", "human"}:
+    elif spec.category in {"creature", "animal"} and "leg" in spec.prompt.lower():
         backend = "blender"
-        reason = "Offline anatomy scaffold; use Meshy/local AI for a more detailed candidate"
-    elif spec.category in {"structure", "vehicle", "weapon"}:
+        reason = "Editable offline dragon-leg anatomy scaffold; artist review required"
+    elif spec.category == "structure":
         backend = "blender"
-        reason = "Deterministic modular/hard-surface construction"
+        reason = "Deterministic modular/hard-surface building scaffold"
     else:
-        backend = "blender"
-        reason = "Default offline deterministic candidate; explicit cloud backend is opt-in"
+        backend = "meshy"
+        reason = "No reliable built-in geometry builder for this arbitrary prompt; cloud candidate requires explicit paid consent"
 
     stages = [
         "reference_analysis",

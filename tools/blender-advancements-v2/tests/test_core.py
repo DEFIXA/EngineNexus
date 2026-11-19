@@ -15,6 +15,16 @@ class TestAssetFactory(unittest.TestCase):
         self.assertTrue(r.requires_human_retopology)
         self.assertIn("rig_and_pose_tests", r.stages)
 
+    def test_arbitrary_prop_routes_to_supported_generator(self):
+        spec = AssetSpec("sword_01", "ancient sword", "weapon")
+        r = route(spec)
+        self.assertEqual(r.backend, "meshy")
+        self.assertTrue(r.requires_paid_consent)
+
+    def test_unreferenced_creature_head_needs_3d_ai(self):
+        spec = AssetSpec("head_01", "dragon head", "creature")
+        self.assertEqual(route(spec).backend, "meshy")
+
     def test_reference_creature_prefers_image_to_3d(self):
         spec = AssetSpec("dragon_ref", "dragon leg", "creature",
                          references=["dragon_front.png"])

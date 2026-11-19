@@ -75,3 +75,6 @@ The Blender worker now supports `structure` (simple modular building with door a
 
 ## Blender 5 FBX exporter compatibility
 The Ubuntu Blender 5.0.1 package used in CI exposes an incomplete FBX exporter API that raises `AttributeError: ExportFBX has no attribute use_space_transform`. V2 detects this and **always exports GLB**; FBX is exported only when the installed Blender operator supports the required options. Tree collision is additionally exported as `collision.glb` when FBX is unavailable. For Unreal, import the GLB with the appropriate Interchange plugin and configure collision explicitly. Do not claim UCX collision was imported automatically from GLB.
+
+## Arbitrary-prompt routing
+The offline Blender worker only implements concrete scaffold categories. Unsupported categories such as vehicles, weapons, generic props, humanoids and non-leg creatures automatically route to Meshy text/image-to-3D and stop at the explicit paid-cloud consent gate. This prevents silently generating an unrelated primitive instead of the requested asset.
