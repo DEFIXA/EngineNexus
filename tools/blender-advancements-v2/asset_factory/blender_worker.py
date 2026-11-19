@@ -346,35 +346,68 @@ def export_mesh(obj, lods, collision, output):
 
 
 def render_reference_views(obj, output):
-    """Fixed orthographic technical previews, not a reference-similarity score."""
+    """Create GPU-free, depth-sorted SVG technical previews in headless Blender.
+
+    Painter sorting is approximate and not a substitute for proper reference renders.
+    Avoids EGL/OpenGL crashes on headless CI runners.
+    """
     from mathutils import Vector
-    scene = bpy.context.scene
-    scene.render.engine = "BLENDER_WORKBENCH"
-    scene.render.resolution_x = 512
-    scene.render.resolution_y = 512
-    scene.render.resolution_percentage = 100
-    scene.render.image_settings.file_format = "PNG"
-    camera_data = bpy.data.cameras.new("QC_Ortho")
-    camera = bpy.data.objects.new("QC_Ortho", camera_data)
-    bpy.context.collection.objects.link(camera)
-    scene.camera = camera
-    camera_data.type = "ORTHO"
-    dims = obj.dimensions
-    span = max(dims.x, dims.y, dims.z, 1.0)
-    camera_data.ortho_scale = span * 1.65
-    center = obj.matrix_world @ Vector((0.0, 0.0, 0.0))
-    # Use evaluated world-space bounds for a robust camera target.
-    center = sum((obj.matrix_world @ Vector(c) for c in obj.bound_box), Vector()) / 8.0
-    directions = {
+    preview = obj.copy()
+    preview.data = obj.data.copy()
+    bpy.context.collection.objects.link(preview)
+    preview.name = "QC_TEMP"
+    # Keep the SVG small enough to inspect and store.
+    face_count = max(1, triangles(preview))
+    if face_count > 6000:
+        bpy.ops.object.select_all(action="DESELECT")
+        preview.select_set(True)
+        bpy.context.view_layer.objects.active = preview
+        mod = preview.modifiers.new("QC_Simplify", "DECIMATE")
+        mod.ratio = max(0.005, 6000 / face_count)
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+
+    verts = [preview.matrix_world @ v.co for v in preview.data.vertices]
+    center = sum(verts, Vector((0.0, 0.0, 0.0))) / max(1, len(verts))
+    span = max(float(v) for v in obj.dimensions)
+    span = max(span, 1.0)
+    views = {
         "front": Vector((0.0, -1.0, 0.25)),
         "side": Vector((1.0, 0.0, 0.25)),
         "three_quarter": Vector((1.0, -1.0, 0.45)),
     }
-    for name, direction in directions.items():
-        camera.location = center + direction.normalized() * span * 2.5
-        camera.rotation_euler = (center - camera.location).to_track_quat("-Z", "Y").to_euler()
-        scene.render.filepath = str(output / f"qc_{name}.png")
-        bpy.ops.render.render(write_still=True)
+    light = Vector((0.5, -0.4, 1.0)).normalized()
+    for name, direction in views.items():
+        forward = direction.normalized()
+        right = forward.cross(Vector((0.0, 0.0, 1.0))).normalized()
+        up = right.cross(forward).normalized()
+        faces = []
+        for poly in preview.data.polygons:
+            pts = [verts[i] for i in poly.vertices]
+            if len(pts) < 3:
+                continue
+            coords = []
+            for point in pts:
+                v = point - center
+                x = 256 + 410 * v.dot(right) / span
+                y = 256 - 410 * v.dot(up) / span
+                coords.append((x, y))
+            normal = (pts[1] - pts[0]).cross(pts[2] - pts[0])
+            if normal.length_squared > 0:
+                normal.normalize()
+            shade = int(135 + 95 * abs(normal.dot(light)))
+            shade = max(50, min(245, shade))
+            depth = sum((point - center).dot(forward) for point in pts) / len(pts)
+            coords_str = " ".join(f"{x:.2f},{y:.2f}" for x, y in coords)
+            faces.append((depth, f'<polygon points="{coords_str}" fill="rgb({shade},{shade},{shade})" stroke="#505050" stroke-width="0.22"/>'))
+        faces.sort(key=lambda pair: pair[0])
+        svg = ['<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">',
+               '<rect width="512" height="512" fill="#f0f0f0"/>',
+               '<g stroke-linejoin="round">']
+        svg.extend(shape for _, shape in faces)
+        svg.extend(['</g>', '</svg>'])
+        (output / f"qc_{name}.svg").write_text("\n".join(svg), encoding="utf-8")
+    bpy.data.objects.remove(preview, do_unlink=True)
+
 
 
 def main():

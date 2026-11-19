@@ -59,3 +59,6 @@ No universal polygon budget. Choose budgets per platform, screen size, draw coun
 
 ## Meshy CLI production workflow
 Prefer the installed Meshy hosted tools in a connected ChatGPT session. For local unattended builds, `asset_factory.meshy_cli` uses the authenticated Meshy CLI and supports text prompts, single-view images and multi-view images. It stores the task ID and does not silently resubmit a paid job. CLI builds use `python -m asset_factory.cli build spec.json --allow-paid`. If it returns a downloaded GLB, pass that file as `extra.source_glb` to a **separate static** Blender postprocess spec; do not postprocess rigged/animated topology destructively.
+
+## Headless QC previews
+The worker exports qc_front.svg, qc_side.svg and qc_three_quarter.svg using CPU geometry projection. They are approximate technical views, not photorealistic renders or automatic reference-matching proof. This avoids EGL/OpenGL requirements on headless runners.

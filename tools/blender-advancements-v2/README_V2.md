@@ -78,3 +78,6 @@ The Ubuntu Blender 5.0.1 package used in CI exposes an incomplete FBX exporter A
 
 ## Arbitrary-prompt routing
 The offline Blender worker only implements concrete scaffold categories. Unsupported categories such as vehicles, weapons, generic props, humanoids and non-leg creatures automatically route to Meshy text/image-to-3D and stop at the explicit paid-cloud consent gate. This prevents silently generating an unrelated primitive instead of the requested asset.
+
+## Headless visual previews
+On headless Linux, Blender 5 Workbench rendering may abort when `libEGL.so.1` is unavailable. V2 therefore generates three GPU-free **SVG technical previews** from mesh geometry using a depth-sorted projection. These are useful for silhouette review but are not photorealistic renders or automated similarity scores. Use Blender's normal render pipeline on a workstation for final artistic review.
