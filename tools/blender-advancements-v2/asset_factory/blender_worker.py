@@ -310,7 +310,47 @@ def mesh_components(obj):
         root = find(poly.vertices[0])
         counts[root] = counts.get(root, 0) + max(1, len(poly.vertices) - 2)
     total = sum(counts.values())
-    return len(counts), max(counts.values(), default=0) / max(1, total)
+    return len(counts), max(counts.values(), default=0) / max(1, total), sorted(counts.values(), reverse=True)[:20]
+
+
+def prune_micro_islands(obj, *, max_fraction=0.005, total_limit=0.015):
+    """Remove only isolated tiny artifacts; never discard a major anatomical part."""
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    unseen = set(bm.verts)
+    groups = []
+    while unseen:
+        seed = unseen.pop()
+        stack = [seed]
+        group = [seed]
+        while stack:
+            v = stack.pop()
+            for e in v.link_edges:
+                other = e.other_vert(v)
+                if other in unseen:
+                    unseen.remove(other)
+                    stack.append(other)
+                    group.append(other)
+        groups.append(group)
+    if len(groups) <= 1:
+        bm.free()
+        return 0, 0
+    counts = [(len({f for v in group for f in v.link_faces}), group)
+              for group in groups]
+    total = sum(n for n, _ in counts)
+    biggest = max(counts, key=lambda pair: pair[0])[1]
+    tiny = [(n, group) for n, group in counts
+            if group is not biggest and n / max(1, total) < max_fraction]
+    discarded = sum(n for n, _ in tiny)
+    if discarded / max(1, total) > total_limit:
+        bm.free()
+        return 0, 0
+    for n, group in tiny:
+        bmesh.ops.delete(bm, geom=group, context="VERTS")
+    bm.to_mesh(obj.data)
+    bm.free()
+    obj.data.update()
+    return len(tiny), discarded
 
 
 def audit(obj):
@@ -320,10 +360,11 @@ def audit(obj):
     nonmanifold = sum(1 for e in bm.edges if not e.is_manifold)
     boundary = sum(1 for e in bm.edges if e.is_boundary)
     bm.free()
-    components, fraction = mesh_components(obj)
+    components, fraction, island_sizes = mesh_components(obj)
     return {"name": obj.name, "triangles": triangles(obj),
             "connected_components": components,
             "largest_component_triangle_fraction": round(fraction, 6),
+            "component_triangle_sizes": island_sizes,
             "loose_vertices": loose, "non_manifold_edges": nonmanifold,
             "boundary_edges": boundary,
             "has_uv": bool(obj.data.uv_layers),
@@ -474,7 +515,7 @@ def render_clay_png(obj, output, *, resolution=640):
     light_data = bpy.data.lights.new("QC_Key", type="AREA")
     light = bpy.data.objects.new("QC_Key", light_data)
     scene.collection.objects.link(light)
-    light_data.energy = 1100
+    light_data.energy = 1200 * max(1.0, (span / 3.0) ** 2)
     light_data.shape = "DISK"
     light_data.size = span * 1.8
     light.location = center + Vector((span * 0.8, -span, span * 1.5))
@@ -547,6 +588,7 @@ def main():
     if source_glb or category in {"tree", "root", "foliage", "creature", "animal"}:
         voxel = 0.075 if spec.get("extra", {}).get("full_creature") else (0.055 if category == "tree" else 0.035)
         apply_voxel_remesh(obj, voxel_size=voxel)
+    pruned_count, pruned_faces = (prune_micro_islands(obj) if category in {"creature", "animal"} else (0, 0))
     add_uv(obj)
     original_triangles, optimized_triangles = reduce_to_budget(obj, spec["target_triangles"])
     lods = make_lods(obj, spec["max_lod_count"] if not spec["animated"] else 0)
@@ -559,6 +601,8 @@ def main():
         "bounding_dimensions_m": [round(float(v), 4) for v in obj.dimensions],
         "objects": [audit(obj)],
         "runtime_triangles": triangles(obj),
+        "pruned_micro_islands": pruned_count,
+        "pruned_micro_faces": pruned_faces,
         "triangles_before_budget_optimization": original_triangles,
         "lods": [{"name": x.name, "triangles": triangles(x)} for x in lods],
         "collision_object": collision.name if collision else None,
@@ -576,6 +620,10 @@ def main():
     render_reference_views(obj, output)
     if category in {"creature", "animal"}:
         report["clay_render_files"] = render_clay_png(obj, output)
+    print("GEOMETRY_QC " + json.dumps({"asset_id": spec["asset_id"],
+        "triangles": report["runtime_triangles"],
+        "components": report["objects"][0]["component_triangle_sizes"],
+        "pruned_islands": pruned_count, "pruned_faces": pruned_faces}))
     (output / "qc.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     bpy.ops.wm.save_as_mainfile(filepath=str(output / "master.blend"))
 
