@@ -52,7 +52,7 @@ def decide(qc: dict, *, animated: bool, references: bool, triangle_budget: int, 
         failures.extend(str(x) for x in qc["errors"])
     return QualityDecision(
         technical_pass=not failures,
-        visual_review_required=references,
+        visual_review_required=references or require_png,
         rig_review_required=animated,
         engine_validation_required=True,
         visual_approved=False,
