@@ -483,7 +483,7 @@ def render_reference_views(obj, output):
 
 
 
-def render_clay_png(obj, output, *, resolution=640):
+def render_clay_png(obj, output, *, resolution=640, full_creature=False):
     """Real Cycles CPU PNG renders of LOD0 geometry for manual reference review."""
     scene = bpy.context.scene
     scene.render.engine = "CYCLES"
@@ -533,6 +533,21 @@ def render_clay_png(obj, output, *, resolution=640):
         if not path.is_file() or path.stat().st_size < 1000:
             raise RuntimeError("Blender failed to render " + str(path))
         files.append(path.name)
+    if full_creature:
+        closeups = {
+            "head": (Vector((3.4, 0.0, 3.0)), Vector((0.5, -1.0, 0.18)), 2.6),
+            "wings": (Vector((-0.5, 0.0, 3.0)), Vector((0.0, -0.20, 1.0)), 11.0),
+        }
+        for name, (focus, direction, scale) in closeups.items():
+            camera_data.ortho_scale = scale
+            camera.location = focus + direction.normalized() * scale * 2.6
+            camera.rotation_euler = (focus - camera.location).to_track_quat("-Z", "Y").to_euler()
+            path = output / ("clay_" + name + ".png")
+            scene.render.filepath = str(path)
+            bpy.ops.render.render(write_still=True)
+            if not path.is_file() or path.stat().st_size < 1000:
+                raise RuntimeError("Blender failed to render " + str(path))
+            files.append(path.name)
     bpy.context.view_layer.material_override = None
     bpy.data.objects.remove(camera, do_unlink=True)
     bpy.data.objects.remove(light, do_unlink=True)
@@ -619,7 +634,8 @@ def main():
     report["warnings"].extend(export_mesh(obj, lods, collision, output))
     render_reference_views(obj, output)
     if category in {"creature", "animal"}:
-        report["clay_render_files"] = render_clay_png(obj, output)
+        report["clay_render_files"] = render_clay_png(obj, output,
+            full_creature=bool(spec.get("extra", {}).get("full_creature")) )
     print("GEOMETRY_QC " + json.dumps({"asset_id": spec["asset_id"],
         "triangles": report["runtime_triangles"],
         "components": report["objects"][0]["component_triangle_sizes"],
