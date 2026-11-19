@@ -69,7 +69,7 @@ def _leg_blobs(blobs, hip, side, *, hind=False, scale=1.0):
             (x - 0.16, y + side * 0.20, 0.43),
             (x + 0.18, y + side * 0.20, 0.23),
         ]
-        radii = [0.46, 0.51, 0.35, 0.26, 0.19, 0.25]
+        radii = [0.46, 0.51, 0.35, 0.26, 0.24, 0.34]
     else:
         points = [
             (x, y, z), (x + 0.22, y + side * 0.07, z - 0.45),
@@ -77,7 +77,7 @@ def _leg_blobs(blobs, hip, side, *, hind=False, scale=1.0):
             (x + 0.10, y + side * 0.10, 0.46),
             (x + 0.30, y + side * 0.12, 0.21),
         ]
-        radii = [0.36, 0.32, 0.23, 0.18, 0.23]
+        radii = [0.36, 0.32, 0.23, 0.23, 0.33]
     for i in range(len(points) - 1):
         _blob_chain(blobs, points[i], points[i + 1],
                     radii[i] * scale, radii[i + 1] * scale)
@@ -88,7 +88,7 @@ def _leg_blobs(blobs, hip, side, *, hind=False, scale=1.0):
         a = palm + Vector((0.08, lateral, -0.03))
         b = palm + Vector((0.48, lateral * 1.35, -0.06))
         c = palm + Vector((0.43, lateral * 1.35, -0.06))
-        _blob_chain(blobs, a, b, 0.14 * scale, 0.105 * scale, spacing=0.09)
+        _blob_chain(blobs, a, b, 0.19 * scale, 0.14 * scale, spacing=0.09)
         toes.append((tuple(c), tuple(c + Vector((0.28, lateral * 0.12, -0.045)))))
     return toes
 
