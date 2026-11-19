@@ -69,6 +69,38 @@ class TestAssetFactory(unittest.TestCase):
         self.assertFalse(decide(qc, animated=False, references=False,
                                 triangle_budget=500).technical_pass)
 
+    def test_200k_triangle_limit(self):
+        with self.assertRaises(ValueError):
+            AssetSpec("over_limit", "dragon", "creature",
+                      target_triangles=200001).validate()
+        AssetSpec("within_limit", "dragon", "creature",
+                  target_triangles=200000).validate()
+
+    def test_fragmented_creature_fails_even_if_watertight(self):
+        qc = {"objects": [{"name": "dragon", "triangles": 15000,
+                "connected_components": 19,
+                "largest_component_triangle_fraction": 0.72,
+                "loose_vertices": 0, "non_manifold_edges": 0,
+                "has_uv": True}], "runtime_triangles": 15000,
+              "clay_render_files": ["clay_front.png", "clay_side.png",
+                                    "clay_three_quarter.png"]}
+        d = decide(qc, animated=True, references=True,
+                   triangle_budget=200000, require_connected=True,
+                   require_png=True)
+        self.assertFalse(d.technical_pass)
+        self.assertTrue(any("disconnected" in x for x in d.failures))
+        self.assertFalse(d.visual_approved)
+
+    def test_missing_clay_renders_fails(self):
+        qc = {"objects": [{"name": "dragon", "triangles": 15000,
+                "connected_components": 1,
+                "largest_component_triangle_fraction": 1.0,
+                "loose_vertices": 0, "non_manifold_edges": 0,
+                "has_uv": True}], "runtime_triangles": 15000}
+        self.assertFalse(decide(qc, animated=True, references=True,
+                triangle_budget=200000, require_connected=True,
+                require_png=True).technical_pass)
+
     def test_qc_rejects_bad_mesh(self):
         qc = {"objects": [{"name": "bad", "triangles": 20, "non_manifold_edges": 5,
                             "loose_vertices": 0, "has_uv": False}],

@@ -61,8 +61,10 @@ def main(argv=None):
         decision = audit_file(output / "qc.json", animated=spec.animated,
                               references=bool(spec.references),
                               triangle_budget=spec.target_triangles,
-                              allow_open_mesh=(spec.category == "terrain"))
-        manifest.update(status="blender_candidate_qc_pass" if decision.technical_pass else "blender_candidate_qc_fail",
+                              allow_open_mesh=(spec.category == "terrain"),
+                              require_connected=(spec.category in {"creature", "animal", "human"}),
+                              require_png=(spec.category in {"creature", "animal"}))
+        manifest.update(status="awaiting_visual_review" if decision.technical_pass else "blender_candidate_qc_fail",
                         qc_file=str(output / "qc.json"),
                         technical_qc=decision.to_dict())
     else:

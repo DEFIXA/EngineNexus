@@ -47,7 +47,7 @@ class AssetSpec:
             raise ValueError(f"Unknown backend: {self.backend}")
         if self.platform not in PLATFORMS:
             raise ValueError(f"Unknown platform: {self.platform}")
-        if not 100 <= self.target_triangles <= 10_000_000:
+        if not 100 <= self.target_triangles <= 200_000:
             raise ValueError("target_triangles out of supported range")
         if self.texture_size not in {512, 1024, 2048, 4096, 8192}:
             raise ValueError("texture_size must be a power-of-two production size")
