@@ -55,15 +55,21 @@ def main(argv=None):
         if not args.blender:
             raise SystemExit("Blender executable required for build: --blender PATH")
         worker = Path(__file__).with_name("blender_worker.py").resolve()
-        cmd = [args.blender, "--background", "--factory-startup",
+        cmd = [args.blender, "--background", "--factory-startup", "--python-exit-code", "1",
                "--python", str(worker), "--", str(output / "spec.json"), str(output)]
         subprocess.run(cmd, check=True, timeout=1800)
-        manifest.update(status="blender_candidate_generated",
-                        qc_file=str(output / "qc.json"))
+        decision = audit_file(output / "qc.json", animated=spec.animated,
+                              references=bool(spec.references),
+                              triangle_budget=spec.target_triangles)
+        manifest.update(status="blender_candidate_qc_pass" if decision.technical_pass else "blender_candidate_qc_fail",
+                        qc_file=str(output / "qc.json"),
+                        technical_qc=decision.to_dict())
     else:
         raise SystemExit(f"Unsupported backend: {selected.backend}")
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     print(json.dumps(manifest, indent=2))
+    if manifest["status"] == "blender_candidate_qc_fail":
+        return 2
     return 0
 
 
