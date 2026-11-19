@@ -33,6 +33,7 @@ def tube(name, points, radii, mat, resolution=7):
     curve.resolution_u = 8
     curve.bevel_depth = 1
     curve.bevel_resolution = 3
+    curve.use_fill_caps = True
     spline = curve.splines.new("BEZIER")
     spline.bezier_points.add(len(points) - 1)
     for p, pos, radius in zip(spline.bezier_points, points, radii):
