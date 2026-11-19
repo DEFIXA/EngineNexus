@@ -58,6 +58,9 @@ jobs:
       - name: Procedural dragon leg
         working-directory: tools/blender-advancements-v2
         run: python -m asset_factory.cli build examples/dragon_leg.json --blender /usr/bin/blender
+      - name: Full dragon clay geometry
+        working-directory: tools/blender-advancements-v2
+        run: python -m asset_factory.cli build examples/full_dragon.json --blender /usr/bin/blender
       - name: Procedural building
         working-directory: tools/blender-advancements-v2
         run: python -m asset_factory.cli build examples/modular_building.json --blender /usr/bin/blender
@@ -77,9 +80,28 @@ jobs:
           test -s work/twisted_dead_tree_001/qc_side.svg
           test -s work/dragon_hindleg_001/asset.glb
           test -s work/dragon_hindleg_001/qc.json
+          test -s work/dragon_hindleg_001/clay_front.png
+          test -s work/dragon_hindleg_001/clay_side.png
+          test -s work/dragon_hindleg_001/clay_three_quarter.png
+          test -s work/full_dragon_clay_001/asset.glb
+          test -s work/full_dragon_clay_001/clay_front.png
+          test -s work/full_dragon_clay_001/clay_side.png
+          test -s work/full_dragon_clay_001/clay_three_quarter.png
           test -s work/modular_building_001/asset.glb
           test -s work/rock_001/asset.glb
           test -s work/terrain_001/asset.glb
+      - name: Emit full-dragon preview for visual review
+        if: success()
+        working-directory: tools/blender-advancements-v2
+        run: |
+          python - <<'PY'
+          import base64
+          from pathlib import Path
+          p = Path("work/full_dragon_clay_001/clay_three_quarter.png")
+          print("BEGIN_DRAGON_PREVIEW_BASE64")
+          print(base64.b64encode(p.read_bytes()).decode("ascii"))
+          print("END_DRAGON_PREVIEW_BASE64")
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
