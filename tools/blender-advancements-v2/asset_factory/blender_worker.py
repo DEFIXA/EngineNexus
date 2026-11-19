@@ -233,6 +233,21 @@ def join_meshes(parts, name):
     return obj
 
 
+def cap_open_tube_ends(obj):
+    """Cap boundary loops without melting the tree trunk and branches."""
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    boundaries = [edge for edge in bm.edges if edge.is_boundary]
+    count = len(boundaries)
+    if boundaries:
+        bmesh.ops.holes_fill(bm, edges=boundaries, sides=0)
+        bm.normal_update()
+        bm.to_mesh(obj.data)
+        obj.data.update()
+    bm.free()
+    return count
+
+
 def apply_voxel_remesh(obj, voxel_size=0.06):
     """Fuses overlapping pieces for static scaffold; destroys deformation topology."""
     bpy.ops.object.select_all(action="DESELECT")
@@ -607,6 +622,7 @@ def main():
     else:
         raise ValueError(f"No built-in geometry builder for category {category}; supply extra.source_glb or a backend")
     obj = join_meshes(parts, name)
+    capped_tube_edges = (cap_open_tube_ends(obj) if category in {"tree", "root", "foliage"} else 0)
     # Keep an unmodified high-poly source in the .blend for future artistic work.
     master = obj.copy()
     master.data = obj.data.copy()
@@ -646,6 +662,7 @@ def main():
         "runtime_triangles": triangles(obj),
         "pruned_micro_islands": pruned_count,
         "pruned_micro_faces": pruned_faces,
+        "capped_tube_boundary_edges": capped_tube_edges,
         "geometric_sculpt": sculpt_report,
         "reference_match_status": "NOT_VISUALLY_APPROVED",
         "triangles_before_budget_optimization": original_triangles,
@@ -669,7 +686,9 @@ def main():
     print("GEOMETRY_QC " + json.dumps({"asset_id": spec["asset_id"],
         "triangles": report["runtime_triangles"],
         "components": report["objects"][0]["component_triangle_sizes"],
-        "pruned_islands": pruned_count, "pruned_faces": pruned_faces}))
+        "pruned_islands": pruned_count, "pruned_faces": pruned_faces,
+        "non_manifold_edges": report["objects"][0]["non_manifold_edges"],
+        "boundary_edges": report["objects"][0]["boundary_edges"]}))
     (output / "qc.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     bpy.ops.wm.save_as_mainfile(filepath=str(output / "master.blend"))
 
