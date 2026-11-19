@@ -87,7 +87,7 @@ def _leg_blobs(blobs, hip, side, *, hind=False, scale=1.0):
         lateral = (i - 1.5) * 0.21 * scale
         a = palm + Vector((0.08, lateral, -0.03))
         b = palm + Vector((0.48, lateral * 1.35, -0.06))
-        c = palm + Vector((0.65, lateral * 1.45, -0.075))
+        c = palm + Vector((0.43, lateral * 1.35, -0.06))
         _blob_chain(blobs, a, b, 0.14 * scale, 0.105 * scale, spacing=0.09)
         toes.append((tuple(c), tuple(c + Vector((0.28, lateral * 0.12, -0.045)))))
     return toes
@@ -109,11 +109,16 @@ def make_leg(seed):
     for i in range(22):
         t = i / 21
         z = 0.7 + t * 1.7
-        x = 0.05 + 0.27 * math.sin(3.1 * t)
-        y = 0.20 + 0.17 * math.sin(t * math.pi)
-        base = (x, y, z)
+        if z < 1.4:
+            x = -0.13 + 0.13 * (z - 0.7)
+        elif z < 2.1:
+            x = -0.04 + 0.74 * (z - 1.4)
+        else:
+            x = 0.48 - 0.28 * (z - 2.1)
+        # Bury every scute root inside the actual anatomical mass.
+        base = (x, 0.0, z)
         tip = (x - 0.10 + rng.uniform(-0.04, 0.04),
-               y + 0.19, z + 0.12)
+               0.27, z + 0.12)
         parts.append(_spike("LimbScute_%02d" % i, base, tip, 0.08))
     return [p for p in parts if p is not None]
 
