@@ -319,6 +319,10 @@ def main():
     collision = make_collision(obj, category) if not spec["animated"] else None
     report = {
         "asset_id": spec["asset_id"],
+        "blender_version": bpy.app.version_string,
+        "target_engine": spec.get("target_engine", "UE5"),
+        "target_platform": spec.get("platform", "pc"),
+        "bounding_dimensions_m": [round(float(v), 4) for v in obj.dimensions],
         "objects": [audit(obj)],
         "runtime_triangles": triangles(obj),
         "triangles_before_budget_optimization": original_triangles,

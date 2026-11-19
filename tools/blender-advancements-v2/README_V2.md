@@ -66,3 +66,6 @@ The GitHub Actions smoke tests install Blender and `python3-numpy` because the d
 
 ## Auto-route policy
 When a creature, character or prop has reference images, the router prefers a Meshy image-conditioned candidate but requires explicit `--allow-paid` and permission to upload those references. For an offline no-reference request, Blender makes an editable scaffold. The route includes alternative backends so a local AI provider or Infinigen can be chosen explicitly.
+
+## Unreal import helper
+Run `asset_factory/unreal_import.py` **inside Unreal Editor's Python environment** and call `import_candidate_folder('/path/to/work/tree', '/Game/Generated')`. It prefers FBX so a UCX collision mesh can be recognized. LOD GLBs still need explicit UE assignment. No UE performance claim is made until profiled in-engine.
