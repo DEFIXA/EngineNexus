@@ -13,6 +13,10 @@ on:
       - '.github/workflows/blender-advancements-v2.yml'
   workflow_dispatch:
 
+concurrency:
+  group: blender-v2-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   python-tests:
     runs-on: ubuntu-latest
@@ -54,6 +58,15 @@ jobs:
       - name: Procedural dragon leg
         working-directory: tools/blender-advancements-v2
         run: python -m asset_factory.cli build examples/dragon_leg.json --blender /usr/bin/blender
+      - name: Procedural building
+        working-directory: tools/blender-advancements-v2
+        run: python -m asset_factory.cli build examples/modular_building.json --blender /usr/bin/blender
+      - name: Procedural rock
+        working-directory: tools/blender-advancements-v2
+        run: python -m asset_factory.cli build examples/rock.json --blender /usr/bin/blender
+      - name: Procedural terrain
+        working-directory: tools/blender-advancements-v2
+        run: python -m asset_factory.cli build examples/terrain.json --blender /usr/bin/blender
       - name: Verify exported files
         working-directory: tools/blender-advancements-v2
         run: |
@@ -64,6 +77,9 @@ jobs:
           test -s work/twisted_dead_tree_001/qc_side.png
           test -s work/dragon_hindleg_001/asset.glb
           test -s work/dragon_hindleg_001/qc.json
+          test -s work/modular_building_001/asset.fbx
+          test -s work/rock_001/asset.glb
+          test -s work/terrain_001/asset.glb
       - uses: actions/upload-artifact@v4
         if: always()
         with:
