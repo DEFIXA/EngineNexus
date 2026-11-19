@@ -586,7 +586,7 @@ def main():
     master.hide_render = True
     master.hide_set(True)
     if source_glb or category in {"tree", "root", "foliage", "creature", "animal"}:
-        voxel = 0.075 if spec.get("extra", {}).get("full_creature") else (0.055 if category == "tree" else 0.035)
+        voxel = 0.052 if spec.get("extra", {}).get("full_creature") else (0.055 if category == "tree" else 0.035)
         apply_voxel_remesh(obj, voxel_size=voxel)
     pruned_count, pruned_faces = (prune_micro_islands(obj) if category in {"creature", "animal"} else (0, 0))
     add_uv(obj)
