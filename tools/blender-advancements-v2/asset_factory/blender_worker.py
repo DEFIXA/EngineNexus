@@ -317,15 +317,27 @@ def export_mesh(obj, lods, collision, output):
     selection_key = next((key for key in
         ("use_selection", "export_selected_objects", "selected_only")
         if key in fbx_props), None)
-    if not selection_key:
-        raise RuntimeError("FBX exporter has no known selection option: " +
-                           ", ".join(sorted(fbx_props)))
-    options = {"filepath": str(output / "asset.fbx"), selection_key: True}
-    optional = {"object_types": {"MESH"}, "apply_unit_scale": True,
-                "bake_anim": False, "add_leaf_bones": False}
-    options.update({key: value for key, value in optional.items()
-                    if key in fbx_props})
-    bpy.ops.export_scene.fbx(**options)
+    if selection_key:
+        options = {"filepath": str(output / "asset.fbx"), selection_key: True}
+        optional = {"object_types": {"MESH"}, "apply_unit_scale": True,
+                    "bake_anim": False, "add_leaf_bones": False}
+        options.update({key: value for key, value in optional.items()
+                        if key in fbx_props})
+        bpy.ops.export_scene.fbx(**options)
+    else:
+        # Blender 5's minimal FBX operator has no selection keyword.
+        # Export from an isolated temporary scene so hidden source/LODs do not leak.
+        temporary = bpy.data.scenes.new("BA_V2_FBX_Export")
+        temporary.collection.objects.link(obj)
+        if collision is not None:
+            temporary.collection.objects.link(collision)
+        try:
+            with bpy.context.temp_override(scene=temporary,
+                                           view_layer=temporary.view_layers[0]):
+                bpy.ops.export_scene.fbx(filepath=str(output / "asset.fbx"),
+                                         axis_forward="-Z", axis_up="Y")
+        finally:
+            bpy.data.scenes.remove(temporary)
     for index, lod in enumerate(lods, start=1):
         bpy.ops.object.select_all(action="DESELECT")
         lod.select_set(True)
