@@ -13,6 +13,7 @@ from pathlib import Path
 from mathutils import Vector
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from dragon_geometry import make_leg as make_anatomical_leg, make_full_dragon
+from sculpt_geometry import sculpt_surface
 
 
 def material(name, rgba):
@@ -604,6 +605,8 @@ def main():
         voxel = 0.052 if spec.get("extra", {}).get("full_creature") else (0.055 if category == "tree" else 0.035)
         apply_voxel_remesh(obj, voxel_size=voxel)
     pruned_count, pruned_faces = (prune_micro_islands(obj) if category in {"creature", "animal"} else (0, 0))
+    sculpt_report = sculpt_surface(obj, category, spec["seed"],
+        full_creature=bool(spec.get("extra", {}).get("full_creature")))
     add_uv(obj)
     original_triangles, optimized_triangles = reduce_to_budget(obj, spec["target_triangles"])
     lods = make_lods(obj, spec["max_lod_count"] if not spec["animated"] else 0)
@@ -618,6 +621,8 @@ def main():
         "runtime_triangles": triangles(obj),
         "pruned_micro_islands": pruned_count,
         "pruned_micro_faces": pruned_faces,
+        "geometric_sculpt": sculpt_report,
+        "reference_match_status": "NOT_VISUALLY_APPROVED",
         "triangles_before_budget_optimization": original_triangles,
         "lods": [{"name": x.name, "triangles": triangles(x)} for x in lods],
         "collision_object": collision.name if collision else None,
@@ -633,9 +638,9 @@ def main():
     }
     report["warnings"].extend(export_mesh(obj, lods, collision, output))
     render_reference_views(obj, output)
-    if category in {"creature", "animal"}:
-        report["clay_render_files"] = render_clay_png(obj, output,
-            full_creature=bool(spec.get("extra", {}).get("full_creature")) )
+    report["clay_render_files"] = render_clay_png(obj, output,
+        resolution=640 if category in {"creature", "animal"} else 448,
+        full_creature=bool(spec.get("extra", {}).get("full_creature")) )
     print("GEOMETRY_QC " + json.dumps({"asset_id": spec["asset_id"],
         "triangles": report["runtime_triangles"],
         "components": report["objects"][0]["component_triangle_sizes"],

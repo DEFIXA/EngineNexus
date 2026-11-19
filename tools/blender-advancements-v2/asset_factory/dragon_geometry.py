@@ -120,22 +120,61 @@ def make_leg(seed):
         tip = (x - 0.10 + rng.uniform(-0.04, 0.04),
                0.27, z + 0.12)
         parts.append(_spike("LimbScute_%02d" % i, base, tip, 0.08))
+    # Staggered armor plates embedded through thigh, hock and shin.
+    for side in (-1, 1):
+        for row in range(20):
+            z = 0.75 + row * 0.105
+            if z < 1.4:
+                x, reach = -0.13 + 0.13 * (z - 0.7), 0.23
+            elif z < 2.1:
+                x, reach = -0.04 + 0.74 * (z - 1.4), 0.33
+            else:
+                x, reach = 0.48 - 0.28 * (z - 2.1), 0.46
+            for band in range(3):
+                offset = (band - 1) * 0.15
+                parts.append(_spike(
+                    "HindPlate_%s_%02d_%d" % (side, row, band),
+                    (x, side * 0.06, z + offset * 0.25),
+                    (x + reach * (0.7 + 0.1 * band),
+                     side * (reach + 0.10 * band),
+                     z + 0.10 + offset * 0.3),
+                    radius=0.072 + 0.012 * band, sides=9))
     return [p for p in parts if p is not None]
 
 
 def _wing_membrane(name, root, elbow, wrist, fingers, side):
-    """Thickened triangular membrane with scalloped trailing edge."""
+    """Cambered subdivided scalloped wing, not a flat polygon fan."""
     root, elbow, wrist = map(_v, (root, elbow, wrist))
-    f1, f2, f3 = map(_v, fingers)
-    # The membrane is deliberately a volume to survive voxel union.
-    mid12 = f1.lerp(f2, 0.5) + Vector((0.35, -side * 0.18, -0.45))
-    mid23 = f2.lerp(f3, 0.5) + Vector((0.35, -side * 0.20, -0.42))
-    verts = [root, elbow, wrist, f1, mid12, f2, mid23, f3,
-             root + Vector((-1.4, -side * 0.25, -0.55))]
-    faces = [(0, 1, 2), (0, 2, 3), (0, 3, 4),
-             (0, 4, 5), (0, 5, 6), (0, 6, 7), (0, 7, 8)]
+    fingers = [_v(p) for p in fingers]
+    border = [elbow, wrist, fingers[0]]
+    for left, right in zip(fingers, fingers[1:]):
+        notch = left.lerp(right, 0.5).lerp(wrist, 0.18)
+        notch.z -= 0.20
+        border.extend([notch, right])
+    border.append(root + Vector((-1.35, -side * 0.30, -0.65)))
+    vertices, faces = [], []
+    n = 9
+    for panel, (left, right) in enumerate(zip(border, border[1:])):
+        indices = {}
+        for i in range(n + 1):
+            for j in range(n + 1 - i):
+                u, v = i / n, j / n
+                p = root * (1 - u - v) + left * u + right * v
+                fold = math.sin(math.pi * u) * math.sin(math.pi * v)
+                p.z += (0.15 + 0.045 * (panel % 3)) * fold
+                p.x += 0.08 * fold
+                indices[(i, j)] = len(vertices)
+                vertices.append(tuple(p))
+        for i in range(n):
+            for j in range(n - i):
+                faces.append((indices[(i, j)], indices[(i + 1, j)],
+                              indices[(i, j + 1)]))
+                if j < n - i - 1:
+                    faces.append((indices[(i + 1, j)],
+                                  indices[(i + 1, j + 1)],
+                                  indices[(i, j + 1)]))
     mesh = bpy.data.meshes.new(name)
-    mesh.from_pydata([tuple(v) for v in verts], [], faces)
+    mesh.from_pydata(vertices, [], faces)
     mesh.update()
     ob = bpy.data.objects.new(name, mesh)
     bpy.context.collection.objects.link(ob)
@@ -143,8 +182,10 @@ def _wing_membrane(name, root, elbow, wrist, fingers, side):
     ob.select_set(True)
     bpy.context.view_layer.objects.active = ob
     solid = ob.modifiers.new("MembraneVolume", "SOLIDIFY")
-    solid.thickness = 0.20
+    solid.thickness = 0.14
     bpy.ops.object.modifier_apply(modifier=solid.name)
+    for face in ob.data.polygons:
+        face.use_smooth = True
     return ob
 
 
@@ -160,8 +201,14 @@ def make_full_dragon(seed):
         blobs.append(((x, 0, z), r))
     _blob_chain(blobs, (1.0, 0, 2.55), (2.40, 0, 2.98), 0.62, 0.38)
     _blob_chain(blobs, (2.40, 0, 2.98), (3.18, 0, 3.12), 0.42, 0.45)
-    _blob_chain(blobs, (3.10, 0, 3.10), (4.25, 0, 2.89), 0.46, 0.23)
-    _blob_chain(blobs, (3.16, 0, 2.81), (4.05, 0, 2.69), 0.32, 0.16)
+    _blob_chain(blobs, (3.10, 0, 3.13), (4.25, 0, 3.05), 0.37, 0.22)
+    _blob_chain(blobs, (3.16, 0, 2.69), (4.05, 0, 2.46), 0.25, 0.12)
+    # Brow shelves and cheek pads blend into the skull.
+    for side in (-1, 1):
+        _blob_chain(blobs, (2.96, side * 0.27, 3.30),
+                    (3.60, side * 0.28, 3.24), 0.19, 0.12)
+        _blob_chain(blobs, (2.80, side * 0.26, 2.93),
+                    (3.28, side * 0.28, 2.88), 0.20, 0.12)
     # Long tapered tail, not a chain of disconnected spheres.
     tail = [
         (-1.8, 0, 2.31, 0.63), (-2.5, 0, 2.17, 0.48),
@@ -183,13 +230,15 @@ def make_full_dragon(seed):
         fingers = [
             (-2.10, side * 5.25, 4.25),
             (-3.05, side * 4.80, 3.55),
-            (-3.60, side * 3.85, 2.95)]
+            (-3.60, side * 3.85, 2.95),
+            (-3.45, side * 2.75, 2.40)]
         for a, b, ra, rb in [
             (root, elbow, 0.29, 0.22),
             (elbow, wrist, 0.23, 0.17),
             (wrist, fingers[0], 0.17, 0.06),
             (wrist, fingers[1], 0.16, 0.055),
-            (wrist, fingers[2], 0.15, 0.055)]:
+            (wrist, fingers[2], 0.15, 0.055),
+            (wrist, fingers[3], 0.14, 0.052)]:
             _blob_chain(blobs, a, b, ra, rb, spacing=0.20)
         wing_configs.append((root, elbow, wrist, fingers, side))
     parts = [_metas("Dragon_Core_Anatomy", blobs, resolution=0.095)]
@@ -254,6 +303,16 @@ def make_full_dragon(seed):
                        (x, side * 0.77, z),
                        (x - 0.09, side * 1.05, z + 0.08),
                        radius=0.075, sides=9))
+    # Real geometric teeth rooted into upper and lower jaws.
+    for side in (-1, 1):
+        for i in range(8):
+            x = 3.30 + i * 0.105
+            parts.append(_spike("UpperTooth_%s_%02d" % (side, i),
+                (x, side * 0.18, 3.01), (x + 0.04, side * 0.20, 2.76),
+                radius=0.055, sides=9))
+            parts.append(_spike("LowerTooth_%s_%02d" % (side, i),
+                (x, side * 0.14, 2.58), (x - 0.03, side * 0.18, 2.76),
+                radius=0.046, sides=9))
     # Brow and jaw ridge scales create geometry without texture maps.
     for side in (-1, 1):
         for i in range(10):

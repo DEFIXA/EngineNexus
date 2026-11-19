@@ -101,6 +101,11 @@ jobs:
           test -s work/modular_building_001/asset.glb
           test -s work/rock_001/asset.glb
           test -s work/terrain_001/asset.glb
+          for asset in twisted_dead_tree_001 modular_building_001 rock_001 terrain_001; do
+            for view in front side three_quarter; do
+              test -s "work/$asset/clay_$view.png"
+            done
+          done
       - name: Emit full-dragon preview for visual review
         if: always()
         working-directory: tools/blender-advancements-v2
@@ -108,7 +113,7 @@ jobs:
           python - <<'PY'
           import base64
           from pathlib import Path
-          for label, p in [("DRAGON", Path("work/full_dragon_clay_001/clay_three_quarter.png")), ("LEG", Path("work/dragon_hindleg_001/clay_three_quarter.png")), ("HEAD", Path("work/full_dragon_clay_001/clay_head.png")), ("WINGS", Path("work/full_dragon_clay_001/clay_wings.png"))]:
+          for label, p in [("DRAGON", Path("work/full_dragon_clay_001/clay_three_quarter.png")), ("LEG", Path("work/dragon_hindleg_001/clay_three_quarter.png")), ("HEAD", Path("work/full_dragon_clay_001/clay_head.png")), ("WINGS", Path("work/full_dragon_clay_001/clay_wings.png")), ("TREE", Path("work/twisted_dead_tree_001/clay_three_quarter.png")), ("BUILDING", Path("work/modular_building_001/clay_three_quarter.png")), ("ROCK", Path("work/rock_001/clay_three_quarter.png")), ("TERRAIN", Path("work/terrain_001/clay_three_quarter.png"))]:
               if p.is_file():
                   print("BEGIN_" + label + "_PREVIEW_BASE64")
                   print(base64.b64encode(p.read_bytes()).decode("ascii"))
