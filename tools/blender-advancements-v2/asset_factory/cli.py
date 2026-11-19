@@ -67,7 +67,7 @@ def main(argv=None):
         decision = audit_file(output / "qc.json", animated=spec.animated,
                               references=bool(spec.references),
                               triangle_budget=spec.target_triangles,
-                              allow_open_mesh=(spec.category == "terrain"),
+                              allow_open_mesh=(spec.category in {"terrain", "tree", "root", "foliage"}),
                               require_connected=(spec.category in {"creature", "animal", "human"}),
                               require_png=True)
         manifest.update(status="awaiting_visual_review" if decision.technical_pass else "blender_candidate_qc_fail",
