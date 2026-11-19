@@ -1,0 +1,11 @@
+{
+  "asset_id": "terrain_001",
+  "category": "terrain",
+  "prompt": "Small undulating open-world terrain tile",
+  "backend": "blender",
+  "platform": "pc",
+  "target_triangles": 8000,
+  "texture_size": 2048,
+  "seed": 25,
+  "max_lod_count": 2
+}

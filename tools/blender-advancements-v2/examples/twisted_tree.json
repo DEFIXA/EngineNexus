@@ -1,0 +1,14 @@
+{
+  "asset_id": "twisted_dead_tree_001",
+  "category": "tree",
+  "prompt": "Ancient dead oak with fused twisting trunk, tapering branching structure, asymmetrical silhouette, exposed roots, broken branch ends and bark fissures, based on sculpt reference.",
+  "references": [],
+  "animated": false,
+  "backend": "blender",
+  "platform": "pc",
+  "target_triangles": 25000,
+  "texture_size": 2048,
+  "seed": 1337,
+  "max_lod_count": 3,
+  "require_human_review": true
+}

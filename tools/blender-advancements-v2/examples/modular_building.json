@@ -1,0 +1,16 @@
+{
+  "asset_id": "modular_building_001",
+  "category": "structure",
+  "prompt": "Modular medieval stone cottage with a doorway, side windows, and a pitched slate roof",
+  "backend": "blender",
+  "platform": "pc",
+  "target_triangles": 18000,
+  "texture_size": 2048,
+  "seed": 12,
+  "max_lod_count": 2,
+  "extra": {
+    "width_m": 6,
+    "depth_m": 4,
+    "height_m": 3.2
+  }
+}

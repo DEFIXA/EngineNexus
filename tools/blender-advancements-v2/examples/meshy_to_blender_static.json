@@ -1,0 +1,14 @@
+{
+  "asset_id": "fantasy_relic_runtime_001",
+  "category": "prop",
+  "prompt": "Optimize a Meshy GLB candidate for static UE5 use, preserve a source copy, remesh and UV, produce LODs, then review materials and normal bakes.",
+  "references": [],
+  "animated": false,
+  "backend": "blender",
+  "platform": "pc",
+  "target_triangles": 10000,
+  "texture_size": 2048,
+  "seed": 44,
+  "max_lod_count": 3,
+  "extra": {"source_glb": "../fantasy_relic_001/asset.glb"}
+}

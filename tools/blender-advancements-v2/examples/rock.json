@@ -1,0 +1,11 @@
+{
+  "asset_id": "rock_001",
+  "category": "rock",
+  "prompt": "Large irregular mossy granite boulder for a fantasy environment",
+  "backend": "blender",
+  "platform": "pc",
+  "target_triangles": 4500,
+  "texture_size": 1024,
+  "seed": 44,
+  "max_lod_count": 3
+}

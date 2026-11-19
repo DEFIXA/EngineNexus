@@ -1,0 +1,20 @@
+{
+  "asset_id": "imported_safi_dragon_candidate",
+  "category": "creature",
+  "prompt": "High-detail full-body dragon geometry imported from an original Blender sculpt or existing Meshy GLB. Preserve original silhouette, wing curvature, teeth, claws and scales. Clay renders only.",
+  "references": [],
+  "animated": false,
+  "backend": "blender",
+  "platform": "pc",
+  "target_triangles": 180000,
+  "texture_size": 1024,
+  "seed": 73,
+  "max_lod_count": 0,
+  "require_human_review": true,
+  "extra": {
+    "source_glb": "SafiDragon.glb",
+    "full_creature": true,
+    "repair_import_with_voxel": false,
+    "sculpt_imported_geometry": false
+  }
+}

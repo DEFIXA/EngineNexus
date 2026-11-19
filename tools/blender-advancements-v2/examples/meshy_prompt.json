@@ -1,0 +1,13 @@
+{
+  "asset_id": "fantasy_relic_001",
+  "category": "prop",
+  "prompt": "Ancient fantasy stone relic with chipped runes, weathered bronze inlays and a readable asymmetrical silhouette. One isolated object, neutral studio light.",
+  "references": [],
+  "animated": false,
+  "backend": "meshy",
+  "platform": "pc",
+  "target_triangles": 12000,
+  "texture_size": 2048,
+  "seed": 44,
+  "max_lod_count": 2
+}
