@@ -219,10 +219,21 @@ def export_mesh(obj, lods, collision, output):
     if collision is not None:
         collision.select_set(True)
     bpy.context.view_layer.objects.active = obj
-    bpy.ops.export_scene.fbx(filepath=str(output / "asset.fbx"),
-                             use_selection=True, object_types={"MESH"},
-                             apply_unit_scale=True, bake_anim=False,
-                             add_leaf_bones=False)
+    # Blender 4.x and 5.x FBX operators expose different keyword names.
+    # Select the supported properties at runtime instead of hardcoding a version.
+    fbx_props = {p.identifier for p in bpy.ops.export_scene.fbx.get_rna_type().properties}
+    selection_key = next((key for key in
+        ("use_selection", "export_selected_objects", "selected_only")
+        if key in fbx_props), None)
+    if not selection_key:
+        raise RuntimeError("FBX exporter has no known selection option: " +
+                           ", ".join(sorted(fbx_props)))
+    options = {"filepath": str(output / "asset.fbx"), selection_key: True}
+    optional = {"object_types": {"MESH"}, "apply_unit_scale": True,
+                "bake_anim": False, "add_leaf_bones": False}
+    options.update({key: value for key, value in optional.items()
+                    if key in fbx_props})
+    bpy.ops.export_scene.fbx(**options)
     for index, lod in enumerate(lods, start=1):
         bpy.ops.object.select_all(action="DESELECT")
         lod.select_set(True)
