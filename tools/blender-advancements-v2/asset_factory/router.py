@@ -12,6 +12,7 @@ class Route:
     requires_human_retopology: bool
     requires_paid_consent: bool
     reference_review: bool
+    alternatives: tuple[str, ...]
 
     def to_dict(self):
         return asdict(self)
@@ -22,12 +23,15 @@ def route(spec: AssetSpec) -> Route:
     if spec.backend != "auto":
         backend = spec.backend
         reason = "Explicit backend selected by user"
+    elif spec.references and spec.category in {"creature", "animal", "human", "prop", "vehicle", "weapon"}:
+        backend = "meshy"
+        reason = "Reference-conditioned 3D candidate is preferred; paid-cloud consent is required"
     elif spec.category in {"tree", "root", "foliage", "rock", "terrain"}:
         backend = "blender"
         reason = "Procedural control and variation are appropriate for nature"
     elif spec.category in {"creature", "animal", "human"}:
         backend = "blender"
-        reason = "Controllable anatomy scaffold; AI can supply a separate reference candidate"
+        reason = "Offline anatomy scaffold; use Meshy/local AI for a more detailed candidate"
     elif spec.category in {"structure", "vehicle", "weapon"}:
         backend = "blender"
         reason = "Deterministic modular/hard-surface construction"
@@ -50,6 +54,15 @@ def route(spec: AssetSpec) -> Route:
         stages.extend(["static_lods", "collision_review"])
     stages.extend(["technical_qc", "export", "unreal_import_and_profile"])
 
+    if spec.category in {"creature", "animal", "human"}:
+        alternatives = ("meshy", "external_ai", "blender")
+    elif spec.category in {"tree", "root", "foliage", "rock", "terrain"}:
+        alternatives = ("infinigen", "blender", "meshy")
+    elif spec.category in {"structure", "vehicle", "weapon"}:
+        alternatives = ("blender", "meshy", "external_ai")
+    else:
+        alternatives = ("meshy", "blender", "external_ai")
+
     return Route(
         backend=backend,
         reason=reason,
@@ -57,4 +70,5 @@ def route(spec: AssetSpec) -> Route:
         requires_human_retopology=spec.animated,
         requires_paid_consent=backend == "meshy",
         reference_review=bool(spec.references),
+        alternatives=alternatives,
     )

@@ -15,6 +15,14 @@ class TestAssetFactory(unittest.TestCase):
         self.assertTrue(r.requires_human_retopology)
         self.assertIn("rig_and_pose_tests", r.stages)
 
+    def test_reference_creature_prefers_image_to_3d(self):
+        spec = AssetSpec("dragon_ref", "dragon leg", "creature",
+                         references=["dragon_front.png"])
+        r = route(spec)
+        self.assertEqual(r.backend, "meshy")
+        self.assertTrue(r.requires_paid_consent)
+        self.assertIn("blender", r.alternatives)
+
     def test_cloud_requires_consent(self):
         spec = AssetSpec("prop_01", "stone relic", "prop", backend="meshy")
         self.assertTrue(route(spec).requires_paid_consent)

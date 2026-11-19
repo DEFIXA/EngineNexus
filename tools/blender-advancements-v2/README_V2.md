@@ -63,3 +63,6 @@ Set `extra.source_glb` in a static-asset spec and use `backend: blender`. The wo
 
 ## CI and Blender runtime requirements
 The GitHub Actions smoke tests install Blender and `python3-numpy` because the distribution's glTF exporter requires NumPy. Blender is invoked with `--python-exit-code 1` to ensure Python failures produce nonzero process status. The controller also checks the generated QC JSON before reporting a successful candidate.
+
+## Auto-route policy
+When a creature, character or prop has reference images, the router prefers a Meshy image-conditioned candidate but requires explicit `--allow-paid` and permission to upload those references. For an offline no-reference request, Blender makes an editable scaffold. The route includes alternative backends so a local AI provider or Infinigen can be chosen explicitly.
