@@ -284,6 +284,33 @@ def make_lods(obj, count):
     return results
 
 
+def mesh_components(obj):
+    """Count connected mesh islands, including floating debris."""
+    mesh = obj.data
+    parent = list(range(len(mesh.vertices)))
+    sizes = [1] * len(parent)
+
+    def find(i):
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    for edge in mesh.edges:
+        a, b = find(edge.vertices[0]), find(edge.vertices[1])
+        if a != b:
+            if sizes[a] < sizes[b]:
+                a, b = b, a
+            parent[b] = a
+            sizes[a] += sizes[b]
+    counts = {}
+    for poly in mesh.polygons:
+        root = find(poly.vertices[0])
+        counts[root] = counts.get(root, 0) + max(1, len(poly.vertices) - 2)
+    total = sum(counts.values())
+    return len(counts), max(counts.values(), default=0) / max(1, total)
+
+
 def audit(obj):
     bm = bmesh.new()
     bm.from_mesh(obj.data)
@@ -291,7 +318,10 @@ def audit(obj):
     nonmanifold = sum(1 for e in bm.edges if not e.is_manifold)
     boundary = sum(1 for e in bm.edges if e.is_boundary)
     bm.free()
+    components, fraction = mesh_components(obj)
     return {"name": obj.name, "triangles": triangles(obj),
+            "connected_components": components,
+            "largest_component_triangle_fraction": round(fraction, 6),
             "loose_vertices": loose, "non_manifold_edges": nonmanifold,
             "boundary_edges": boundary,
             "has_uv": bool(obj.data.uv_layers),
@@ -410,6 +440,62 @@ def render_reference_views(obj, output):
 
 
 
+def render_clay_png(obj, output, *, resolution=640):
+    """Real Cycles CPU PNG renders of LOD0 geometry for manual reference review."""
+    scene = bpy.context.scene
+    scene.render.engine = "CYCLES"
+    scene.cycles.device = "CPU"
+    scene.cycles.samples = 12
+    scene.render.resolution_x = resolution
+    scene.render.resolution_y = resolution
+    scene.render.resolution_percentage = 100
+    scene.render.image_settings.file_format = "PNG"
+    scene.render.film_transparent = False
+    scene.world.color = (0.10, 0.10, 0.10)
+    clay = bpy.data.materials.new("QC_Clay")
+    clay.diffuse_color = (0.55, 0.55, 0.55, 1.0)
+    clay.use_nodes = True
+    shader = clay.node_tree.nodes.get("Principled BSDF")
+    if shader:
+        shader.inputs["Base Color"].default_value = (0.52, 0.52, 0.52, 1)
+        shader.inputs["Roughness"].default_value = 0.85
+    bpy.context.view_layer.material_override = clay
+    camera_data = bpy.data.cameras.new("QC_Camera")
+    camera = bpy.data.objects.new("QC_Camera", camera_data)
+    scene.collection.objects.link(camera)
+    camera_data.type = "ORTHO"
+    scene.camera = camera
+    from mathutils import Vector
+    center = sum((obj.matrix_world @ Vector(c) for c in obj.bound_box), Vector()) / 8.0
+    span = max(0.2, *[float(x) for x in obj.dimensions])
+    camera_data.ortho_scale = span * 1.35
+    light_data = bpy.data.lights.new("QC_Key", type="AREA")
+    light = bpy.data.objects.new("QC_Key", light_data)
+    scene.collection.objects.link(light)
+    light_data.energy = 1100
+    light_data.shape = "DISK"
+    light_data.size = span * 1.8
+    light.location = center + Vector((span * 0.8, -span, span * 1.5))
+    light.rotation_euler = (center - light.location).to_track_quat("-Z", "Y").to_euler()
+    views = {"front": Vector((0, -1, 0.18)),
+             "side": Vector((1, 0, 0.18)),
+             "three_quarter": Vector((1, -1, 0.4))}
+    files = []
+    for name, direction in views.items():
+        camera.location = center + direction.normalized() * span * 2.6
+        camera.rotation_euler = (center - camera.location).to_track_quat("-Z", "Y").to_euler()
+        path = output / ("clay_" + name + ".png")
+        scene.render.filepath = str(path)
+        bpy.ops.render.render(write_still=True)
+        if not path.is_file() or path.stat().st_size < 1000:
+            raise RuntimeError("Blender failed to render " + str(path))
+        files.append(path.name)
+    bpy.context.view_layer.material_override = None
+    bpy.data.objects.remove(camera, do_unlink=True)
+    bpy.data.objects.remove(light, do_unlink=True)
+    return files
+
+
 def main():
     if "--" not in sys.argv:
         raise RuntimeError("Expected -- spec.json output_dir")
@@ -483,6 +569,8 @@ def main():
     }
     report["warnings"].extend(export_mesh(obj, lods, collision, output))
     render_reference_views(obj, output)
+    if category in {"creature", "animal"}:
+        report["clay_render_files"] = render_clay_png(obj, output)
     (output / "qc.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     bpy.ops.wm.save_as_mainfile(filepath=str(output / "master.blend"))
 
