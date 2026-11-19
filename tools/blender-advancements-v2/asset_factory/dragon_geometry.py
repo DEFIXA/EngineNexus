@@ -227,6 +227,33 @@ def make_full_dragon(seed):
         parts.append(_spike("DorsalSpike_%02d" % i,
                            (x, 0, z - 0.14),
                            (x - 0.18, 0, z + height), radius))
+    # Shallow overlapping geometric scutes: actual mesh relief, no textures.
+    # Roots are embedded well inside the torso so every plate fuses to the skin.
+    for side in (-1, 1):
+        for ix in range(20):
+            x = -1.65 + ix * 0.145
+            for iz in range(7):
+                z = 1.92 + iz * 0.14 + (ix % 2) * 0.065
+                y0 = side * 0.50
+                y1 = side * (0.80 + 0.025 * math.sin(ix * 2.1 + iz))
+                parts.append(_spike("BodyScale_%s_%02d_%02d" % (side, ix, iz),
+                           (x, y0, z),
+                           (x - 0.07, y1, z + 0.08),
+                           radius=0.072, sides=9))
+        for ix in range(14):
+            x = 1.35 + ix * 0.085
+            z = 2.88 + 0.035 * math.sin(ix * 1.3)
+            parts.append(_spike("NeckScale_%s_%02d" % (side, ix),
+                       (x, side * 0.23, z),
+                       (x - 0.045, side * 0.47, z + 0.075),
+                       radius=0.06, sides=9))
+        for ix in range(15):
+            x = -1.7 + 0.1 * math.sin(ix * 0.8)
+            z = 1.25 + ix * 0.07
+            parts.append(_spike("HindThighPlate_%s_%02d" % (side, ix),
+                       (x, side * 0.77, z),
+                       (x - 0.09, side * 1.05, z + 0.08),
+                       radius=0.075, sides=9))
     # Brow and jaw ridge scales create geometry without texture maps.
     for side in (-1, 1):
         for i in range(10):
