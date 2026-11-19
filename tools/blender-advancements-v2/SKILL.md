@@ -50,3 +50,9 @@ No universal polygon budget. Choose budgets per platform, screen size, draw coun
 - asset_factory/unreal_import.py: optional UE Editor import
 - install_upgrade.py: safe ZIP merger
 - tests/: offline unit tests
+
+## Additional implementation notes
+- V2 can export a static candidate as GLB and FBX; tree collision uses an approximate UCX trunk cylinder, not precise branch collision.
+- Separate LOD GLBs require assignment in Unreal; export alone does not configure UE LODs.
+- For imported GLBs, use extra.source_glb and backend=blender only for static candidates. Do not destroy an imported skeleton.
+- Blender source master and QC are saved to the output directory. Automated geometry is not reference-validated or animation-ready.

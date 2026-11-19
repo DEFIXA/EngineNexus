@@ -153,6 +153,30 @@ def triangles(obj):
     return sum(len(poly.vertices) - 2 for poly in obj.data.polygons)
 
 
+def reduce_to_budget(obj, target):
+    before = triangles(obj)
+    if before <= target:
+        return before, before
+    bpy.ops.object.select_all(action="DESELECT")
+    obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
+    mod = obj.modifiers.new("Runtime_Triangle_Budget", "DECIMATE")
+    mod.ratio = max(0.001, min(1.0, 0.97 * target / before))
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    return before, triangles(obj)
+
+
+def make_collision(obj, category):
+    if category not in {"tree", "root", "foliage"}:
+        return None
+    # Intentionally simple trunk-only physics; branch collisions need game design review.
+    bpy.ops.mesh.primitive_cylinder_add(vertices=12, radius=0.62,
+                                        depth=5.8, location=(0, 0, 2.9))
+    collision = bpy.context.object
+    collision.name = f"UCX_{obj.name}_00"
+    return collision
+
+
 def make_lods(obj, count):
     results = []
     for index in range(1, count + 1):
@@ -180,13 +204,29 @@ def audit(obj):
             "negative_scale": any(v < 0 for v in obj.scale)}
 
 
-def export_mesh(obj, output):
+def export_mesh(obj, lods, collision, output):
+    # Main GLB contains only the visible runtime mesh.
     bpy.ops.object.select_all(action="DESELECT")
     obj.select_set(True)
     bpy.context.view_layer.objects.active = obj
-    # glTF export is available in standard Blender distributions.
     bpy.ops.export_scene.gltf(filepath=str(output / "asset.glb"),
                               export_format="GLB", use_selection=True)
+    # UE FBX contains main mesh plus a UCX collision primitive when available.
+    bpy.ops.object.select_all(action="DESELECT")
+    obj.select_set(True)
+    if collision is not None:
+        collision.select_set(True)
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.export_scene.fbx(filepath=str(output / "asset.fbx"),
+                             use_selection=True, object_types={"MESH"},
+                             apply_unit_scale=True, bake_anim=False,
+                             add_leaf_bones=False)
+    for index, lod in enumerate(lods, start=1):
+        bpy.ops.object.select_all(action="DESELECT")
+        lod.select_set(True)
+        bpy.context.view_layer.objects.active = lod
+        bpy.ops.export_scene.gltf(filepath=str(output / f"lod{index}.glb"),
+                                  export_format="GLB", use_selection=True)
 
 
 def main():
@@ -199,32 +239,57 @@ def main():
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.object.delete(use_global=False)
     category = spec["category"]
-    if category in {"tree", "root", "foliage"}:
+    name = ("MASTER_" if spec["animated"] else "SM_") + spec["asset_id"]
+    source_glb = spec.get("extra", {}).get("source_glb")
+    if source_glb:
+        if spec["animated"]:
+            raise ValueError("Animated GLB needs rig-aware retopology; do not flatten its skeleton")
+        source = Path(source_glb)
+        if not source.is_absolute():
+            source = (Path(args[0]).resolve().parent / source).resolve()
+        if source.suffix.lower() != ".glb":
+            raise ValueError("Source must be a GLB file")
+        bpy.ops.import_scene.gltf(filepath=str(source))
+        parts = [x for x in bpy.context.scene.objects if x.type == "MESH"]
+        if not parts:
+            raise ValueError("Imported GLB contains no mesh")
+    elif category in {"tree", "root", "foliage"}:
         parts = make_tree(spec["seed"])
-        name = "SM_" + spec["asset_id"]
     elif category in {"creature", "animal"}:
         parts = make_leg(spec["seed"])
-        name = "MASTER_" + spec["asset_id"]
     else:
-        raise ValueError(f"No built-in geometry builder for category {category}; use a provider or add a builder")
+        raise ValueError(f"No built-in geometry builder for category {category}; supply extra.source_glb or a backend")
     obj = join_meshes(parts, name)
+    # Keep an unmodified high-poly source in the .blend for future artistic work.
+    master = obj.copy()
+    master.data = obj.data.copy()
+    bpy.context.collection.objects.link(master)
+    master.name = "SOURCE_HIGH_" + spec["asset_id"]
+    master.hide_render = True
+    master.hide_set(True)
     apply_voxel_remesh(obj, voxel_size=0.055 if category == "tree" else 0.035)
     add_uv(obj)
+    original_triangles, optimized_triangles = reduce_to_budget(obj, spec["target_triangles"])
     lods = make_lods(obj, spec["max_lod_count"] if not spec["animated"] else 0)
+    collision = make_collision(obj, category) if not spec["animated"] else None
     report = {
         "asset_id": spec["asset_id"],
         "objects": [audit(obj)],
         "runtime_triangles": triangles(obj),
+        "triangles_before_budget_optimization": original_triangles,
         "lods": [{"name": x.name, "triangles": triangles(x)} for x in lods],
+        "collision_object": collision.name if collision else None,
         "errors": [],
         "warnings": [
-            "Procedural candidate, not reference-validated",
+            "Procedural/imported candidate, not reference-validated",
             "Automatic remesh is not deformation topology",
             "No high-to-low texture bake or UE profiling performed",
+            "UCX collision is an approximate trunk primitive; verify gameplay fit",
+            "LODs are exported separately and require Unreal LOD assignment",
         ],
     }
     (output / "qc.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
-    export_mesh(obj, output)
+    export_mesh(obj, lods, collision, output)
     bpy.ops.wm.save_as_mainfile(filepath=str(output / "master.blend"))
 
 

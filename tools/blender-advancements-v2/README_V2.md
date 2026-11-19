@@ -5,9 +5,9 @@ This is an **additive, installable upgrade** for the existing blenderadvancement
 ## What it does
 - Prompt/JSON asset specifications and deterministic backend routing.
 - Procedural Blender candidate for a dragon hind leg and a twisted dead tree.
-- Static mesh cleanup, UV projection, configurable LODs, convex collision, FBX/GLB export, and JSON QC.
+- Static mesh cleanup, UV projection, triangle-budget decimation, separate LOD GLBs, approximate tree trunk collision, FBX/GLB export, and JSON QC.
 - Meshy image-to-3D candidate download, guarded by explicit paid-cloud consent.
-- Infinigen individual asset factory wrapper, version-dependent.
+- Infinigen individual asset factory wrapper, version-dependent, exporting BLEND and OBJ candidates.
 - Unreal Editor Python import starter.
 - Offline unit tests and safe ZIP merge with the original skill.
 
@@ -51,3 +51,9 @@ No shell=True. Untrusted ZIPs are checked for path traversal and symlinks. API k
 - Infinigen: https://github.com/princeton-vl/infinigen
 - Meshy API: https://docs.meshy.ai/
 - Unreal Python: https://dev.epicgames.com/documentation/en-us/unreal-engine/scripting-the-unreal-editor-using-python
+
+## Imported Meshy/third-party GLB optimization
+Set `extra.source_glb` in a static-asset spec and use `backend: blender`. The worker imports the GLB, saves a source copy, voxel-fuses, UV-projects, decimates to the target budget, and exports GLB/FBX/LODs. **It is destructive to authored topology and textures; inspect UV/material changes and rebake as needed.** Do not use this shortcut for animated/rigged assets.
+
+## Verified Infinigen CLI reference
+[Generating Individual Assets](https://github.com/princeton-vl/infinigen/blob/main/docs/source/GeneratingIndividualAssets.md) documents `python -m infinigen_examples.generate_individual_assets --output_folder outputs/chunkyrock -f ChunkyRock -n 1 --save_blend --render none --export obj`. This requires an installed Infinigen environment.

@@ -1,0 +1,68 @@
+name: Blender Advancements V2 validation
+
+on:
+  push:
+    branches:
+      - feature/blender-advancements-v2
+    paths:
+      - 'tools/blender-advancements-v2/**'
+      - '.github/workflows/blender-advancements-v2.yml'
+  pull_request:
+    paths:
+      - 'tools/blender-advancements-v2/**'
+      - '.github/workflows/blender-advancements-v2.yml'
+  workflow_dispatch:
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Syntax check
+        run: python -m compileall -q tools/blender-advancements-v2
+      - name: Unit tests and planning smoke tests
+        working-directory: tools/blender-advancements-v2
+        run: |
+          python -m unittest discover -s tests -v
+          python -m asset_factory.cli plan examples/twisted_tree.json
+          python -m asset_factory.cli plan examples/dragon_leg.json
+      - name: Package skill overlay ZIP
+        run: |
+          cd tools
+          zip -r -q ../blender_advancements_v2_overlay.zip blender-advancements-v2 -x '*/__pycache__/*' '*.pyc'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: blender-advancements-v2-overlay
+          path: blender_advancements_v2_overlay.zip
+
+  blender-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Blender
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y blender
+      - name: Procedural twisted tree
+        working-directory: tools/blender-advancements-v2
+        run: python -m asset_factory.cli build examples/twisted_tree.json --blender /usr/bin/blender
+      - name: Procedural dragon leg
+        working-directory: tools/blender-advancements-v2
+        run: python -m asset_factory.cli build examples/dragon_leg.json --blender /usr/bin/blender
+      - name: Verify exported files
+        working-directory: tools/blender-advancements-v2
+        run: |
+          test -s work/twisted_dead_tree_001/asset.glb
+          test -s work/twisted_dead_tree_001/asset.fbx
+          test -s work/twisted_dead_tree_001/qc.json
+          test -s work/dragon_hindleg_001/asset.glb
+          test -s work/dragon_hindleg_001/qc.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: blender-smoke-outputs
+          path: tools/blender-advancements-v2/work/
